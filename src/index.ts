@@ -1,9 +1,0 @@
-import app from './app';
-
-app.listen(
-    process.env.PORT ? Number(process.env.PORT) : 3000,
-    () => {
-
-        console.log(`🦊 Servidor rodando em http://localhost:${process.env.PORT ? Number(process.env.PORT) : 3000}`);
-    }
-);

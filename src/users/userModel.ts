@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import pool from "../db/pool.ts";
-import { AppError } from "../utils/appError.ts";
+import { AppError } from "../utils/AppError.ts";
 
 const SALT_ROUNDS = Number(process.env.SALT_ROUNDS) || 10;
 
@@ -21,7 +21,7 @@ export async function createUser(
     return rows[0];
   } catch (error: any) {
     if (error.code === "23505") {
-      throw new AppError({ statusCode: 400, messages: ["Email already exists"] });
+      throw new AppError({ statusCode: 409, messages: ["Email already exists"] });
     }
     throw new AppError({ statusCode: 500, messages: ["Database internal error"] });
   }

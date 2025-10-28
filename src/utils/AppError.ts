@@ -1,13 +1,13 @@
 export type errorsType = {
   statusCode: number;
-  messages?: String[];
+  messages?: string[];
 };
 
 export class AppError extends Error {
   public statusCode: number;
-  public messages?: String[];
+  public messages?: string[];
 
-  constructor({statusCode = 400, messages}: errorsType) {
+  constructor({ statusCode = 400, messages }: errorsType) {
     super(messages ? messages.join(", ") : "Application Error");
     this.statusCode = statusCode;
     this.messages = messages;
