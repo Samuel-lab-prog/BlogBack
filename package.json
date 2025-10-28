@@ -4,7 +4,8 @@
   "type": "module",
   "private": true,
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/jsonwebtoken": "^9.0.10"
   },
   "peerDependencies": {
     "typescript": "^5"
@@ -16,7 +17,9 @@
   "dependencies": {
     "@elysiajs/openapi": "^1.4.11",
     "@types/pg": "^8.15.5",
+    "bcryptjs": "^3.0.2",
     "elysia": "^1.4.13",
+    "jsonwebtoken": "^9.0.2",
     "pg": "^8.16.3"
   }
 }

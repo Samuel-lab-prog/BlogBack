@@ -1,15 +1,20 @@
 import Elysia from "elysia";
 import { openapi } from "@elysiajs/openapi";
-import type AppErrorType from "./utils/AppError";
-import AppError from "./utils/AppError";
+import { userRoutes } from "./users/userRoute";
+import { AppError } from "./utils/appError";
 
 const app = new Elysia()
-    .get("/", () => {"Hello, Bun! 🐰";
-        
-    })
-    .onError(({ error }) => {
-        const err = error as AppErrorType;
-        return { errors: err?.errors, message: err.message, statusCode: err.statusCode };
-    })
-    .use(openapi())
-export default app;
+  .use(openapi({ 
+    path: "/docs",
+  }))
+  .use(userRoutes)
+  .onError(({ error, set }) => {
+  if (error instanceof AppError) {
+    set.status = error.statusCode;
+    return { messages: error.messages || [error.message] };
+  }
+  set.status = 500;
+  return { messages: ["Erro interno do servidor"] };
+})
+ export default app;
+

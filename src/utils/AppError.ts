@@ -1,16 +1,15 @@
-type AppErrorType = {
-    errors?: string[];
-    statusCode: number;
-    message: string;
+export type errorsType = {
+  statusCode: number;
+  messages?: String[];
 };
 
-export default class AppError extends Error {
-    errors: string[] | undefined;
-    statusCode: number;
-    constructor(props: AppErrorType) {
-        super(props.message);
-        this.statusCode = props.statusCode;
-        this.errors = props.errors;
-        Object.setPrototypeOf(this, AppError.prototype);
-    }
+export class AppError extends Error {
+  public statusCode: number;
+  public messages?: String[];
+
+  constructor({statusCode = 400, messages}: errorsType) {
+    super(messages ? messages.join(", ") : "Application Error");
+    this.statusCode = statusCode;
+    this.messages = messages;
+  }
 }
