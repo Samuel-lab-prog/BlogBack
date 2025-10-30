@@ -4,19 +4,28 @@
   "type": "module",
   "private": true,
   "devDependencies": {
+    "@elysiajs/cors": "^1.4.0",
+    "@elysiajs/openapi": "^1.4.11",
+    "@eslint/js": "^9.38.0",
     "@types/bun": "latest",
-    "@types/jsonwebtoken": "^9.0.10"
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/pg": "^8.15.5",
+    "eslint": "^9.38.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "globals": "^16.4.0",
+    "jiti": "^2.6.1",
+    "typescript-eslint": "^8.46.2"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "scripts": {
     "start": "bun run src/server.ts",
-    "dev": "bun run --watch src/server.ts"
+    "dev": "bun run --watch src/server.ts",
+    "format": "eslint . --fix && prettier --write ."
   },
   "dependencies": {
-    "@elysiajs/openapi": "^1.4.11",
-    "@types/pg": "^8.15.5",
     "bcryptjs": "^3.0.2",
     "elysia": "^1.4.13",
     "jsonwebtoken": "^9.0.2",
