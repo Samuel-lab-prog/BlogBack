@@ -42,7 +42,7 @@ export async function createUser(
     if (!rows[0]) {
       throw new AppError({
         statusCode: 500,
-        messages: [
+        errorMessages: [
           'Unexpected error: user not returned after creation',
         ],
       });
@@ -53,14 +53,14 @@ export async function createUser(
     if (error instanceof DatabaseError && error.code === '23505') {
       throw new AppError({
         statusCode: 409,
-        messages: ['Email already in use'],
+        errorMessages: ['Email already in use'],
       });
     }
 
     console.error(error);
     throw new AppError({
       statusCode: 500,
-      messages: ['Database internal error while creating user'],
+      errorMessages: ['Database internal error while creating user'],
     });
   }
 }
@@ -81,7 +81,7 @@ export async function findUserByEmail(
     console.error(error);
     throw new AppError({
       statusCode: 500,
-      messages: [
+      errorMessages: [
         'Database internal error while fetching user by email',
       ],
     });

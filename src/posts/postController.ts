@@ -23,7 +23,7 @@ export async function registerPost(
   if (!title || !content || !authorId) {
     throw new AppError({
       statusCode: 400,
-      messages: [
+      errorMessages: [
         'Missing required fields (title, content, authorId)',
       ],
     });
@@ -33,7 +33,7 @@ export async function registerPost(
   if (existing) {
     throw new AppError({
       statusCode: 409,
-      messages: ['Slug already in use'],
+      errorMessages: ['Slug already in use'],
     });
   }
   const postData = { ...body, slug, status };
@@ -56,7 +56,7 @@ export async function listPostsByTag(tagName: string) {
   if (!tagName) {
     throw new AppError({
       statusCode: 400,
-      messages: ['Missing tag name parameter'],
+      errorMessages: ['Missing tag name parameter'],
     });
   }
 

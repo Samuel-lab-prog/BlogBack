@@ -8,7 +8,7 @@ import {
   postBodySchema,
   postResponseSchema,
   errorSchema,
-} from '../utils/models.ts';
+} from '../utils/schemas.ts';
 
 export const postRoutes = (app: Elysia) =>
   app.group('/posts', (app) =>

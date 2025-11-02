@@ -2,22 +2,29 @@ import Elysia from 'elysia';
 import { openapi } from '@elysiajs/openapi';
 import cors from '@elysiajs/cors';
 
+import { AppError } from './utils/AppError';
 import { userRoutes } from './users/userRoute';
 import { postRoutes } from './posts/postRoutes';
-import { AppError } from './utils/AppError';
 
 const app = new Elysia()
   .use(cors())
   .use(
     openapi({
       path: '/docs',
+      documentation: {
+        info: {
+          title: 'Blog API',
+          description: 'API documentation for my personal Blog API',
+          version: '1.0.0',
+        },
+      }
     })
   )
   .onError(({ error }) => {
     if (error instanceof AppError) {
       return new Response(
         JSON.stringify({
-          messages: error.messages,
+          errorMessages: error.errorMessages,
           statusCode: error.statusCode,
         }),
         {
@@ -28,7 +35,7 @@ const app = new Elysia()
     }
     return new Response(
       JSON.stringify({
-        messages: ['Internal server error'],
+        errorMessages: ['Internal server error'],
         statusCode: 500,
         error: error,
       }),

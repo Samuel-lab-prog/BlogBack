@@ -21,7 +21,7 @@ export async function registerUser(
   ) {
     throw new AppError({
       statusCode: 400,
-      messages: ['All fields are required'],
+      errorMessages: ['All fields are required'],
     });
   }
   const user = await createUser(body);
@@ -37,14 +37,14 @@ export async function loginUser(body: {
   if (!user)
     throw new AppError({
       statusCode: 401,
-      messages: ['Invalid credentials'],
+      errorMessages: ['Invalid credentials'],
     });
 
   const valid = await validatePassword(user, password);
   if (!valid)
     throw new AppError({
       statusCode: 401,
-      messages: ['Invalid credentials'],
+      errorMessages: ['Invalid credentials'],
     });
 
   const token = generateToken({ id: user.id, email: user.email });

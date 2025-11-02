@@ -6,7 +6,7 @@ import {
   registerUserResponseSchema,
   loginUserBodySchema,
   loginUserResponseSchema,
-} from '../utils/models';
+} from '../utils/schemas';
 
 export const userRoutes = (app: Elysia) =>
   app.group('/users', (app) =>

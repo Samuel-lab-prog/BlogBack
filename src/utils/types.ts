@@ -1,6 +1,6 @@
 export type errorsType = {
   statusCode: number;
-  messages?: string[];
+  errorMessages?: string[];
 };
 
 // Users types

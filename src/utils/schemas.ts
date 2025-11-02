@@ -13,7 +13,7 @@ export const registerUserBodySchema = t.Object({
     example: 'david@gmail.com',
     error() {
       throw new AppError({
-        messages: [
+        errorMessages: [
           'Invalid email format: email must be a valid email address',
         ],
         statusCode: 422,
@@ -26,7 +26,7 @@ export const registerUserBodySchema = t.Object({
     example: '12345678',
     error() {
       throw new AppError({
-        messages: [
+        errorMessages: [
           'Invalid password format: password must be between 6 and 30 characters',
         ],
         statusCode: 422,
@@ -39,7 +39,7 @@ export const registerUserBodySchema = t.Object({
     example: 'David',
     error() {
       throw new AppError({
-        messages: [
+        errorMessages: [
           'Invalid first name format: first name must be between 3 and 20 characters',
         ],
         statusCode: 422,
@@ -52,7 +52,7 @@ export const registerUserBodySchema = t.Object({
     example: 'Smith',
     error() {
       throw new AppError({
-        messages: [
+        errorMessages: [
           'Invalid last name format: last name must be between 3 and 20 characters',
         ],
         statusCode: 422,
@@ -74,7 +74,7 @@ export const loginUserBodySchema = t.Object({
     example: 'david@gmail.com',
     error() {
       throw new AppError({
-        messages: [
+        errorMessages: [
           'Invalid email format: email must be a valid email address',
         ],
         statusCode: 422,
@@ -85,7 +85,7 @@ export const loginUserBodySchema = t.Object({
     example: '12345678',
     error() {
       throw new AppError({
-        messages: [
+        errorMessages: [
           'Invalid password format: password must be at least 6 characters long',
         ],
         statusCode: 422,
@@ -112,7 +112,7 @@ export const postBodySchema = t.Object({
     example: 'Como aprender JavaScript',
     error() {
       throw new AppError({
-        messages: [
+        errorMessages: [
           'Invalid title: must be between 3 and 150 characters',
         ],
         statusCode: 422,
@@ -124,7 +124,7 @@ export const postBodySchema = t.Object({
     example: 'Conteúdo do post...',
     error() {
       throw new AppError({
-        messages: ['Content must have at least 10 characters'],
+        errorMessages: ['Content must have at least 10 characters'],
         statusCode: 422,
       });
     },

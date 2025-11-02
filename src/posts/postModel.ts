@@ -46,7 +46,7 @@ export async function createPost(
     if (!rows[0]) {
       throw new AppError({
         statusCode: 500,
-        messages: ['Failed to create post.'],
+        errorMessages: ['Failed to create post.'],
       });
     }
 
@@ -55,13 +55,13 @@ export async function createPost(
     if (error instanceof DatabaseError && error.code === '23505') {
       throw new AppError({
         statusCode: 409,
-        messages: ['Slug already in use'],
+        errorMessages: ['Slug already in use'],
       });
     }
     console.error(error);
     throw new AppError({
       statusCode: 500,
-      messages: ['Database internal error while creating post.'],
+      errorMessages: ['Database internal error while creating post.'],
     });
   }
 }
@@ -110,7 +110,7 @@ export async function addTagsToPost(
     console.error(error);
     throw new AppError({
       statusCode: 500,
-      messages: ['Failed to associate tags to post'],
+      errorMessages: ['Failed to associate tags to post'],
     });
   } finally {
     client.release();
@@ -143,7 +143,7 @@ export async function findAllPosts(): Promise<postType[]> {
     console.error(error);
     throw new AppError({
       statusCode: 500,
-      messages: ['Database internal error while listing posts'],
+      errorMessages: ['Database internal error while listing posts'],
     });
   }
 }
@@ -170,7 +170,7 @@ export async function findPostsByTag(
     console.error(error);
     throw new AppError({
       statusCode: 500,
-      messages: [
+      errorMessages: [
         'Database internal error while listing posts by tag',
       ],
     });
