@@ -17,11 +17,12 @@ const app = new Elysia()
           description: 'API documentation for my personal Blog API',
           version: '1.0.0',
         },
-      }
+      },
     })
   )
   .onError(({ error }) => {
     if (error instanceof AppError) {
+      console.error('AppError:', error.errorMessages);
       return new Response(
         JSON.stringify({
           errorMessages: error.errorMessages,
@@ -33,11 +34,12 @@ const app = new Elysia()
         }
       );
     }
+    console.error('Unexpected Error:', (error as Error).message);
     return new Response(
       JSON.stringify({
         errorMessages: ['Internal server error'],
         statusCode: 500,
-        error: error,
+        error: (error as Error).message,
       }),
       {
         status: 500,

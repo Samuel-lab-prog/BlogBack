@@ -6,7 +6,7 @@ import {
   type userRowType,
   type userType,
   type createUserInsertType,
-} from '../utils/types.ts';
+} from './userTypes.ts';
 
 const SALT_ROUNDS = Number(process.env.SALT_ROUNDS) || 10;
 

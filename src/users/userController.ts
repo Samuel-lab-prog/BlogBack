@@ -8,30 +8,20 @@ import { generateToken } from '../utils/jwt';
 import {
   type userType,
   type createUserBodyType,
-} from '../utils/types';
+  type loginUserBodyType,
+  type loginUserResponseType,
+} from './userTypes';
 
 export async function registerUser(
   body: createUserBodyType
 ): Promise<userType> {
-  if (
-    !body.firstName ||
-    !body.lastName ||
-    !body.email ||
-    !body.password
-  ) {
-    throw new AppError({
-      statusCode: 400,
-      errorMessages: ['All fields are required'],
-    });
-  }
   const user = await createUser(body);
   return user;
 }
 
-export async function loginUser(body: {
-  email: string;
-  password: string;
-}) {
+export async function loginUser(
+  body: loginUserBodyType
+): Promise<loginUserResponseType> {
   const { email, password } = body;
   const user = await findUserByEmail(email);
   if (!user)

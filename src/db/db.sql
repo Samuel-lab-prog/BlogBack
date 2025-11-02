@@ -5,7 +5,6 @@ CREATE TABLE users (
     email VARCHAR(100) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL
 );
-
 CREATE TABLE tags (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) UNIQUE NOT NULL
@@ -17,15 +16,13 @@ CREATE TABLE posts (
     slug VARCHAR(150) UNIQUE NOT NULL,
     content TEXT NOT NULL,
     author_id INTEGER NOT NULL,
-    status VARCHAR(20) DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
+	image_url varchar(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
 );
-
 CREATE TABLE post_tags (
     post_id INTEGER REFERENCES posts(id) ON DELETE CASCADE,
     tag_id INTEGER REFERENCES tags(id) ON DELETE CASCADE,
     PRIMARY KEY (post_id, tag_id)
 );
-

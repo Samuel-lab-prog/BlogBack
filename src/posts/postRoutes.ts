@@ -4,11 +4,8 @@ import {
   listPosts,
   listPostsByTag,
 } from './postController.ts';
-import {
-  postBodySchema,
-  postResponseSchema,
-  errorSchema,
-} from '../utils/schemas.ts';
+import { postBodySchema, postResponseSchema } from './postSchemas.ts';
+import { errorSchema } from '../utils/AppError.ts';
 
 export const postRoutes = (app: Elysia) =>
   app.group('/posts', (app) =>

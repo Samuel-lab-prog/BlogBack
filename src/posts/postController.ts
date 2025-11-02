@@ -1,5 +1,5 @@
 import { AppError } from '../utils/AppError.ts';
-import { type postBodyType, type postType } from '../utils/types.ts';
+import { type postBodyType, type postType } from './postTypes.ts';
 import {
   createPost,
   addTagsToPost,
@@ -14,20 +14,9 @@ export async function registerPost(
 ): Promise<postType> {
   const {
     title,
-    content,
-    authorId,
-    status = 'draft',
     tags = [],
   } = body;
 
-  if (!title || !content || !authorId) {
-    throw new AppError({
-      statusCode: 400,
-      errorMessages: [
-        'Missing required fields (title, content, authorId)',
-      ],
-    });
-  }
   const slug = slugify(title, { lower: true, strict: true });
   const existing = await findPostBySlugRaw(slug);
   if (existing) {
@@ -36,7 +25,7 @@ export async function registerPost(
       errorMessages: ['Slug already in use'],
     });
   }
-  const postData = { ...body, slug, status };
+  const postData = { ...body, slug };
   const post = await createPost(postData);
 
   const safeTags = tags.filter(

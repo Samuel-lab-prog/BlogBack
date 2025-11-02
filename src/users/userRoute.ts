@@ -1,12 +1,12 @@
 import { Elysia } from 'elysia';
 import { registerUser, loginUser } from './userController';
 import {
-  errorSchema,
   registerUserBodySchema,
   registerUserResponseSchema,
   loginUserBodySchema,
   loginUserResponseSchema,
-} from '../utils/schemas';
+} from './userSchemas';
+import { errorSchema } from '../utils/AppError';
 
 export const userRoutes = (app: Elysia) =>
   app.group('/users', (app) =>

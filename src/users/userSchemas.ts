@@ -1,12 +1,6 @@
 import { t } from 'elysia';
-import { AppError } from './AppError';
+import { AppError } from '../utils/AppError';
 
-export const errorSchema = t.Object({
-  messages: t.Array(t.String()),
-  statusCode: t.Number(),
-});
-
-// User schemas
 export const registerUserBodySchema = t.Object({
   email: t.String({
     format: 'email',
@@ -22,12 +16,12 @@ export const registerUserBodySchema = t.Object({
   }),
   password: t.String({
     minLength: 6,
-    maxLength: 30,
+    maxLength: 20,
     example: '12345678',
     error() {
       throw new AppError({
         errorMessages: [
-          'Invalid password format: password must be between 6 and 30 characters',
+          'Invalid password format: password must be between 6 and 20 characters',
         ],
         statusCode: 422,
       });
@@ -35,12 +29,12 @@ export const registerUserBodySchema = t.Object({
   }),
   firstName: t.String({
     minLength: 3,
-    maxLength: 20,
+    maxLength: 30,
     example: 'David',
     error() {
       throw new AppError({
         errorMessages: [
-          'Invalid first name format: first name must be between 3 and 20 characters',
+          'Invalid first name format: first name must be between 3 and 30 characters',
         ],
         statusCode: 422,
       });
@@ -48,12 +42,12 @@ export const registerUserBodySchema = t.Object({
   }),
   lastName: t.String({
     minLength: 3,
-    maxLength: 20,
+    maxLength: 30,
     example: 'Smith',
     error() {
       throw new AppError({
         errorMessages: [
-          'Invalid last name format: last name must be between 3 and 20 characters',
+          'Invalid last name format: last name must be between 3 and 30 characters',
         ],
         statusCode: 422,
       });
@@ -102,48 +96,4 @@ export const loginUserResponseSchema = t.Object({
     firstName: t.String(),
     lastName: t.String(),
   }),
-});
-
-// Post schemas
-export const postBodySchema = t.Object({
-  title: t.String({
-    minLength: 3,
-    maxLength: 150,
-    example: 'Como aprender JavaScript',
-    error() {
-      throw new AppError({
-        errorMessages: [
-          'Invalid title: must be between 3 and 150 characters',
-        ],
-        statusCode: 422,
-      });
-    },
-  }),
-  content: t.String({
-    minLength: 10,
-    example: 'Conteúdo do post...',
-    error() {
-      throw new AppError({
-        errorMessages: ['Content must have at least 10 characters'],
-        statusCode: 422,
-      });
-    },
-  }),
-  authorId: t.Number({ example: 1 }),
-  tags: t.Optional(t.Array(t.String({ example: 'JavaScript' }))),
-  status: t.Optional(
-    t.Union([t.Literal('draft'), t.Literal('published')])
-  ),
-});
-
-export const postResponseSchema = t.Object({
-  id: t.Number(),
-  title: t.String(),
-  slug: t.String(),
-  content: t.String(),
-  authorId: t.Number(),
-  status: t.String(),
-  createdAt: t.String(),
-  updatedAt: t.String(),
-  tags: t.Array(t.String()),
 });

@@ -5,7 +5,7 @@ import type {
   postRowType,
   postType,
   insertPostType,
-} from '../utils/types.ts';
+} from './postTypes.ts';
 
 function mapPostRow(row: postRowType): postType {
   return {
@@ -14,7 +14,7 @@ function mapPostRow(row: postRowType): postType {
     slug: row.slug,
     content: row.content,
     authorId: Number(row.author_id),
-    status: row.status,
+    excerpt: row.excerpt,
     createdAt: new Date(row.created_at).toISOString(),
     updatedAt: new Date(
       row.updated_at ?? row.created_at
@@ -29,18 +29,18 @@ export async function createPost(
   postData: insertPostType
 ): Promise<postType> {
   const query = `
-    INSERT INTO posts (title, slug, content, author_id, status)
+    INSERT INTO posts (title, slug, content, author_id, excerpt)
     VALUES ($1, $2, $3, $4, $5)
     RETURNING *
   `;
   try {
-    const { title, slug, content, authorId, status } = postData;
+    const { title, slug, content, authorId, excerpt } = postData;
     const { rows } = await pool.query(query, [
       title,
       slug,
       content,
       authorId,
-      status,
+      excerpt,
     ]);
 
     if (!rows[0]) {
@@ -127,8 +127,8 @@ export async function findPostBySlugRaw(
 export async function findAllPosts(): Promise<postType[]> {
   const query = `
     SELECT 
-      p.id, p.title, p.slug, p.content, p.status, p.author_id,
-      p.created_at, p.updated_at,
+      p.id, p.title, p.slug, p.content, p.author_id,
+      p.created_at, p.updated_at, p.excerpt,
       json_agg(t.name) FILTER (WHERE t.name IS NOT NULL) AS tags
     FROM posts p
     LEFT JOIN post_tags pt ON p.id = pt.post_id
@@ -154,8 +154,8 @@ export async function findPostsByTag(
   try {
     const query = `
       SELECT 
-        p.id, p.title, p.slug, p.content, p.status, p.created_at,
-        p.updated_at, p.author_id,
+        p.id, p.title, p.slug, p.content, p.created_at,
+        p.updated_at, p.author_id, p.excerpt,
         json_agg(t.name) FILTER (WHERE t.name IS NOT NULL) AS tags
       FROM posts p
       JOIN post_tags pt ON p.id = pt.post_id
