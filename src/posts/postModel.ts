@@ -176,3 +176,21 @@ export async function findPostsByTag(
     });
   }
 }
+export async function findPostBySlug(
+  slug: string
+): Promise<postType | null> {
+  const query = `
+    SELECT 
+      p.id, p.title, p.slug, p.content, p.author_id,
+      p.created_at, p.updated_at, p.excerpt,
+      json_agg(t.name) FILTER (WHERE t.name IS NOT NULL) AS tags
+    FROM posts p
+    LEFT JOIN post_tags pt ON p.id = pt.post_id
+    LEFT JOIN tags t ON pt.tag_id = t.id
+    WHERE p.slug = $1
+    GROUP BY p.id
+    LIMIT 1
+  `;
+  const { rows } = await pool.query(query, [slug]);
+  return rows[0] ? mapPostRow(rows[0]) : null;
+}

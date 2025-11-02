@@ -3,6 +3,7 @@ import {
   registerPost,
   listPosts,
   listPostsByTag,
+  getPostBySlug
 } from './postController.ts';
 import { postBodySchema, postResponseSchema } from './postSchemas.ts';
 import { errorSchema } from '../utils/AppError.ts';
@@ -70,6 +71,26 @@ export const postRoutes = (app: Elysia) =>
             summary: 'List posts by tag',
             description:
               'Fetch all posts associated with a specific tag.',
+            tags: ['Post'],
+          },
+        }
+      )
+      .get(
+        '/:slug',
+        async ({ params, set }) => {
+          const post = await getPostBySlug(params.slug);
+          set.status = 200;
+          return post;
+        },
+        {
+          response: {
+            200: postResponseSchema,
+            404: errorSchema,
+            500: errorSchema,
+          },
+          detail: {
+            summary: 'Get a post by slug',
+            description: 'Fetch a single post by its slug.',
             tags: ['Post'],
           },
         }

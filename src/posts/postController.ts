@@ -6,6 +6,7 @@ import {
   findAllPosts,
   findPostsByTag,
   findPostBySlugRaw,
+  findPostBySlug
 } from './postModel.ts';
 import slugify from 'slugify';
 
@@ -50,4 +51,14 @@ export async function listPostsByTag(tagName: string) {
   }
 
   return await findPostsByTag(tagName);
+}
+export async function getPostBySlug(slug: string) {
+  const post = await findPostBySlug(slug);
+  if (!post) {
+    throw new AppError({
+      statusCode: 404,
+      errorMessages: ['Post not found'],
+    });
+  }
+  return post;
 }
