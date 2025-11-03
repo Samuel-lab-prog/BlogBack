@@ -58,7 +58,6 @@ export async function createPost(
         errorMessages: ['Slug already in use'],
       });
     }
-    console.error(error);
     throw new AppError({
       statusCode: 500,
       errorMessages: ['Database internal error while creating post.'],
@@ -124,7 +123,7 @@ export async function findPostBySlugRaw(
   return rows[0]?.id || null;
 }
 
-export async function findAllPosts(): Promise<postType[]> {
+export async function findPosts(limit: number): Promise<postType[]> {
   const query = `
     SELECT 
       p.id, p.title, p.slug, p.content, p.author_id,
@@ -135,9 +134,10 @@ export async function findAllPosts(): Promise<postType[]> {
     LEFT JOIN tags t ON pt.tag_id = t.id
     GROUP BY p.id
     ORDER BY p.created_at DESC
+    LIMIT $1
   `;
   try {
-    const { rows } = await pool.query(query);
+    const { rows } = await pool.query(query, [limit]);
     return rows.map((row) => mapPostRow(row));
   } catch (error) {
     console.error(error);

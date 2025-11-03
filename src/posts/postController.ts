@@ -3,7 +3,7 @@ import { type postBodyType, type postType } from './postTypes.ts';
 import {
   createPost,
   addTagsToPost,
-  findAllPosts,
+  findPosts,
   findPostsByTag,
   findPostBySlugRaw,
   findPostBySlug
@@ -38,8 +38,8 @@ export async function registerPost(
   return post;
 }
 
-export async function listPosts() {
-  return await findAllPosts();
+export async function listPosts(limit: number = 20) {
+  return await findPosts(limit);
 }
 
 export async function listPostsByTag(tagName: string) {

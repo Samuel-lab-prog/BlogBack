@@ -37,8 +37,9 @@ export const postRoutes = (app: Elysia) =>
       )
       .get(
         '/',
-        async ({ set }) => {
-          const posts = await listPosts();
+        async ({ set, query }) => {
+          const { limit } = query ?? { limit: '20' };
+          const posts = await listPosts(Number(limit));
           set.status = 200;
           return posts;
         },
@@ -48,7 +49,7 @@ export const postRoutes = (app: Elysia) =>
             500: errorSchema,
           },
           detail: {
-            summary: 'List all posts',
+            summary: 'List all posts with a limit (default 20)',
             description: 'Returns all posts with their tags.',
             tags: ['Post'],
           },
