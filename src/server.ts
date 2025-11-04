@@ -20,29 +20,31 @@ const app = new Elysia()
       },
     })
   )
-  .onError(({ error }) => {
+  .onError(({ error, set }) => {
     if (error instanceof AppError) {
-      console.error('AppError:', error.errorMessages);
+      console.error('AppError:', error.errorMessages.join(', '), error.statusCode);
+      set.status = error.statusCode;
       return new Response(
         JSON.stringify({
           errorMessages: error.errorMessages,
-          statusCode: error.statusCode,
+          statusCode: set.status,
         }),
         {
-          status: error.statusCode,
+          status: set.status,
           headers: { 'Content-Type': 'application/json' },
         }
       );
     }
     console.error('Unexpected Error:', (error as Error).message);
+    const message = (error as Error).message || 'Internal Server Error';
+    const statusCode = typeof set.status === 'number' ? set.status : 500;
     return new Response(
       JSON.stringify({
-        errorMessages: ['Internal server error'],
-        statusCode: 500,
-        error: (error as Error).message,
+        errorMessages: [message],
+        statusCode: statusCode,
       }),
       {
-        status: 500,
+        status: statusCode,
         headers: { 'Content-Type': 'application/json' },
       }
     );

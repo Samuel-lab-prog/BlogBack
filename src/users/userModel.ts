@@ -1,4 +1,3 @@
-import bcrypt from 'bcryptjs';
 import pool from '../db/pool.ts';
 import { DatabaseError } from 'pg';
 import { AppError } from '../utils/AppError.ts';
@@ -15,16 +14,14 @@ function mapUserRow(row: UserRow): Omit<User, 'password'> {
 }
  
 export async function createUser(userData: Omit<User, 'id' | 'isAdmin'>): Promise<Omit<User, 'password'>> {
-  const SALT_ROUNDS = Number(process.env.SALT_ROUNDS) || 10;
   const { firstName, lastName, email, password } = userData;
-  const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
   const query = `
     INSERT INTO users (first_name, last_name, email, password_hash)
     VALUES ($1, $2, $3, $4)
     RETURNING id, email, first_name, last_name, is_admin
   `;
   try {
-    const { rows } = await pool.query(query, [firstName, lastName, email, hashedPassword]);
+    const { rows } = await pool.query(query, [firstName, lastName, email, password]);
     return mapUserRow(rows[0]);
   } catch (error: unknown) {
     if (error instanceof DatabaseError && error.code === '23505') {
@@ -46,15 +43,13 @@ export async function findUserByEmail(email: string): Promise<UserRow | null> {
     FROM users
     WHERE email = $1
   `;
-
   try {
     const { rows } = await pool.query(query, [email]);
     return rows[0] || null;
   } catch (error: unknown) {
-    console.error(error);
     throw new AppError({
       statusCode: 500,
-      errorMessages: ['Database internal error while fetching user by email: ' + (error as Error).message],
+      errorMessages: ['Database internal error while getting user by email: ' + (error as Error).message],
     });
   }
 }
@@ -78,21 +73,12 @@ export async function findUserById(id: number): Promise<User | null> {
   }
 }
 
-export async function validatePassword(
-  user: Pick<UserRow, 'password_hash'>,
-  password: string
-): Promise<boolean> {
-  if (!user.password_hash) return false;
-  return bcrypt.compare(password, user.password_hash);
-}
-
 export async function isAdmin(userId: number): Promise<boolean> {
   const query = `
     SELECT is_admin
     FROM users
     WHERE id = $1
   `;
-
   try {
     const { rows } = await pool.query(query, [userId]);
     if (!rows[0]) return false;

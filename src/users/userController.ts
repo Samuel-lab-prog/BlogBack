@@ -1,19 +1,15 @@
 import { AppError } from '../utils/AppError';
-import { createUser, findUserByEmail, validatePassword, findUserById, isAdmin } from './userModel';
+import { createUser, findUserByEmail, findUserById, isAdmin } from './userModel';
 import { generateToken, verifyToken } from '../utils/jwt';
+import bcrypt from 'bcryptjs';
 import { type User } from './userTypes';
 
 export async function registerUser(
   body: Omit<User, 'id' | 'isAdmin'>
 ): Promise<Omit<User, 'password'>> {
-  const { firstName, lastName, email, password } = body;
-  if (!firstName || !lastName || !email || !password) {
-    throw new AppError({
-      statusCode: 400,
-      errorMessages: ['Missing required user fields'],
-    });
-  }
-
+  const { password } = body;
+  const password_hash = await bcrypt.hash(password, Number(process.env.SALT_ROUNDS) || 10);
+  body.password = password_hash;
   return createUser(body);
 }
 
@@ -21,14 +17,6 @@ export async function loginUser(
   body: Pick<User, 'email' | 'password'>
 ): Promise<{ token: string; user: Omit<User, 'password'> }> {
   const { email, password } = body;
-
-  if (!email || !password) {
-    throw new AppError({
-      statusCode: 400,
-      errorMessages: ['Email and password are required'],
-    });
-  }
-
   const user = await findUserByEmail(email);
   if (!user) {
     throw new AppError({
@@ -36,17 +24,14 @@ export async function loginUser(
       errorMessages: ['Invalid credentials'],
     });
   }
-
-  const valid = await validatePassword(user, password);
+  const valid = await bcrypt.compare(password, user.password_hash);
   if (!valid) {
     throw new AppError({
       statusCode: 401,
       errorMessages: ['Invalid credentials'],
     });
   }
-
   const token = generateToken({ id: user.id, email: user.email });
-
   return {
     token,
     user: {

@@ -30,7 +30,7 @@ export const userRoutes = (app: Elysia) =>
           detail: {
             summary: 'Register a new user',
             description:
-              'Creates a new user with first name, last name, email and password. Returns the created user (without password).',
+              'Creates a new user. Returns the created user (without password).',
             tags: ['User'],
           },
         }

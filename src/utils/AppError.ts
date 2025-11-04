@@ -1,7 +1,7 @@
 import { t } from 'elysia';
 export type errorsType = {
   statusCode: number;
-  errorMessages?: string[];
+  errorMessages: string[];
 };
 
 export const errorSchema = t.Object({
@@ -11,10 +11,10 @@ export const errorSchema = t.Object({
 
 export class AppError extends Error {
   public statusCode: number;
-  public errorMessages?: string[];
+  public errorMessages: string[];
 
-  constructor({ statusCode = 400, errorMessages }: errorsType) {
-    super(errorMessages ? errorMessages.join(', ') : 'Application Error');
+  constructor({ statusCode = 500, errorMessages = ['Application Error'] }: errorsType) {
+    super(errorMessages.join(', '));
     this.statusCode = statusCode;
     this.errorMessages = errorMessages;
   }
