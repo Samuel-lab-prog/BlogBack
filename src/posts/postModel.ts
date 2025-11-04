@@ -123,7 +123,7 @@ export async function findPostBySlugRaw(
   return rows[0]?.id || null;
 }
 
-export async function findPosts(limit: number): Promise<postType[]> {
+export async function findPosts(limit: number, tag: string | null): Promise<postType[]> {
   const query = `
     SELECT 
       p.id, p.title, p.slug, p.content, p.author_id,
@@ -132,50 +132,25 @@ export async function findPosts(limit: number): Promise<postType[]> {
     FROM posts p
     LEFT JOIN post_tags pt ON p.id = pt.post_id
     LEFT JOIN tags t ON pt.tag_id = t.id
+    ${tag ? 'WHERE t.name = $2' : ''}
     GROUP BY p.id
     ORDER BY p.created_at DESC
     LIMIT $1
   `;
+
   try {
-    const { rows } = await pool.query(query, [limit]);
+    const params = tag ? [limit, tag] : [limit]; 
+    const { rows } = await pool.query(query, params);
     return rows.map((row) => mapPostRow(row));
   } catch (error) {
-    console.error(error);
     throw new AppError({
       statusCode: 500,
-      errorMessages: ['Database internal error while listing posts'],
+      errorMessages: ['Database internal error while listing posts: ' + error],
     });
   }
 }
 
-export async function findPostsByTag(
-  tagName: string
-): Promise<postType[]> {
-  try {
-    const query = `
-      SELECT 
-        p.id, p.title, p.slug, p.content, p.created_at,
-        p.updated_at, p.author_id, p.excerpt,
-        json_agg(t.name) FILTER (WHERE t.name IS NOT NULL) AS tags
-      FROM posts p
-      JOIN post_tags pt ON p.id = pt.post_id
-      JOIN tags t ON pt.tag_id = t.id
-      WHERE t.name = $1
-      GROUP BY p.id
-      ORDER BY p.created_at DESC
-    `;
-    const { rows } = await pool.query(query, [tagName]);
-    return rows.map((row) => mapPostRow(row));
-  } catch (error) {
-    console.error(error);
-    throw new AppError({
-      statusCode: 500,
-      errorMessages: [
-        'Database internal error while listing posts by tag',
-      ],
-    });
-  }
-}
+
 export async function findPostBySlug(
   slug: string
 ): Promise<postType | null> {
@@ -193,4 +168,10 @@ export async function findPostBySlug(
   `;
   const { rows } = await pool.query(query, [slug]);
   return rows[0] ? mapPostRow(rows[0]) : null;
+}
+
+export async function getTags(): Promise<string[]> {
+  const query = `SELECT DISTINCT name FROM tags ORDER BY name ASC`;
+  const { rows } = await pool.query(query);
+  return rows.map((row) => row.name);
 }

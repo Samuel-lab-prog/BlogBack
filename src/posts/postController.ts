@@ -4,9 +4,9 @@ import {
   createPost,
   addTagsToPost,
   findPosts,
-  findPostsByTag,
   findPostBySlugRaw,
-  findPostBySlug
+  findPostBySlug,
+  getTags
 } from './postModel.ts';
 import slugify from 'slugify';
 
@@ -38,21 +38,11 @@ export async function registerPost(
   return post;
 }
 
-export async function listPosts(limit: number = 20) {
-  return await findPosts(limit);
+export async function listPosts(limit: number, tag: string | null): Promise<postType[]> {
+  return await findPosts(limit, tag);
 }
 
-export async function listPostsByTag(tagName: string) {
-  if (!tagName) {
-    throw new AppError({
-      statusCode: 400,
-      errorMessages: ['Missing tag name parameter'],
-    });
-  }
-
-  return await findPostsByTag(tagName);
-}
-export async function getPostBySlug(slug: string) {
+export async function getPostBySlug(slug: string): Promise<postType> {
   const post = await findPostBySlug(slug);
   if (!post) {
     throw new AppError({
@@ -61,4 +51,7 @@ export async function getPostBySlug(slug: string) {
     });
   }
   return post;
+}
+export async function fetchTags(): Promise<string[]> {
+  return await getTags();
 }

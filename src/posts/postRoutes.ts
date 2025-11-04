@@ -2,8 +2,8 @@ import { Elysia, t } from 'elysia';
 import {
   registerPost,
   listPosts,
-  listPostsByTag,
-  getPostBySlug
+  getPostBySlug,
+  fetchTags
 } from './postController.ts';
 import { postBodySchema, postResponseSchema } from './postSchemas.ts';
 import { errorSchema } from '../utils/AppError.ts';
@@ -37,11 +37,10 @@ export const postRoutes = (app: Elysia) =>
       )
       .get(
         '/',
-        async ({ set, query }) => {
-          const { limit } = query ?? { limit: '20' };
-          const posts = await listPosts(Number(limit));
-          set.status = 200;
-          return posts;
+        async ({ query }) => {
+          const { limit = '20', tag = null } = query;
+          const normalizedTag = tag === '' ? null : tag;
+          return await listPosts(Number(limit), normalizedTag);
         },
         {
           response: {
@@ -49,38 +48,16 @@ export const postRoutes = (app: Elysia) =>
             500: errorSchema,
           },
           detail: {
-            summary: 'List all posts with a limit (default 20)',
-            description: 'Returns all posts with their tags.',
-            tags: ['Post'],
-          },
-        }
-      )
-      .get(
-        '/tags/:tag',
-        async ({ params, set }) => {
-          const posts = await listPostsByTag(params.tag);
-          set.status = 200;
-          return posts;
-        },
-        {
-          response: {
-            200: t.Array(postResponseSchema),
-            400: errorSchema,
-            500: errorSchema,
-          },
-          detail: {
-            summary: 'List posts by tag',
-            description:
-              'Fetch all posts associated with a specific tag.',
+            summary: 'List all posts with a limit (default 20). Optionally filter by tag.',
+            description: 'Returns all posts.',
             tags: ['Post'],
           },
         }
       )
       .get(
         '/:slug',
-        async ({ params, set }) => {
+        async ({ params }) => {
           const post = await getPostBySlug(params.slug);
-          set.status = 200;
           return post;
         },
         {
@@ -92,6 +69,24 @@ export const postRoutes = (app: Elysia) =>
           detail: {
             summary: 'Get a post by slug',
             description: 'Fetch a single post by its slug.',
+            tags: ['Post'],
+          },
+        }
+      )
+      .get(
+        '/tags',
+        async () => {
+          const tags = await fetchTags();
+          return tags;
+        },
+        {
+          response: {
+            200: t.Array(t.String()),
+            500: errorSchema,
+          },
+          detail: {
+            summary: 'Get all tags',
+            description: 'Fetch all unique tags from the database.',
             tags: ['Post'],
           },
         }
