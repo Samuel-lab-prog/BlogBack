@@ -1,11 +1,7 @@
 import { DatabaseError } from 'pg';
 import { AppError } from '../utils/AppError.ts';
 import pool from '../db/pool.ts';
-import type {
-  postRowType,
-  postType,
-  insertPostType,
-} from './postTypes.ts';
+import type { postRowType, postType, insertPostType } from './postTypes.ts';
 
 function mapPostRow(row: postRowType): postType {
   return {
@@ -16,18 +12,12 @@ function mapPostRow(row: postRowType): postType {
     authorId: Number(row.author_id),
     excerpt: row.excerpt,
     createdAt: new Date(row.created_at).toISOString(),
-    updatedAt: new Date(
-      row.updated_at ?? row.created_at
-    ).toISOString(),
-    tags: Array.isArray(row.tags)
-      ? row.tags.filter((t): t is string => !!t)
-      : [],
+    updatedAt: new Date(row.updated_at ?? row.created_at).toISOString(),
+    tags: Array.isArray(row.tags) ? row.tags.filter((t): t is string => !!t) : [],
   };
 }
 
-export async function createPost(
-  postData: insertPostType
-): Promise<postType> {
+export async function createPost(postData: insertPostType): Promise<postType> {
   const query = `
     INSERT INTO posts (title, slug, content, author_id, excerpt)
     VALUES ($1, $2, $3, $4, $5)
@@ -35,13 +25,7 @@ export async function createPost(
   `;
   try {
     const { title, slug, content, authorId, excerpt } = postData;
-    const { rows } = await pool.query(query, [
-      title,
-      slug,
-      content,
-      authorId,
-      excerpt,
-    ]);
+    const { rows } = await pool.query(query, [title, slug, content, authorId, excerpt]);
 
     if (!rows[0]) {
       throw new AppError({
@@ -65,18 +49,13 @@ export async function createPost(
   }
 }
 
-export async function addTagsToPost(
-  postId: number,
-  tagNames: string[]
-): Promise<number> {
+export async function addTagsToPost(postId: number, tagNames: string[]): Promise<number> {
   if (tagNames.length === 0) return 0;
   const client = await pool.connect();
 
   try {
     await client.query('BEGIN');
-    const uniqueTags = [
-      ...new Set(tagNames.map((t) => t.trim().toLowerCase())),
-    ];
+    const uniqueTags = [...new Set(tagNames.map((t) => t.trim().toLowerCase()))];
     await client.query(
       `
       INSERT INTO tags (name)
@@ -85,10 +64,9 @@ export async function addTagsToPost(
       `,
       [uniqueTags]
     );
-    const { rows: tagRows } = await client.query(
-      `SELECT id FROM tags WHERE name = ANY($1)`,
-      [uniqueTags]
-    );
+    const { rows: tagRows } = await client.query(`SELECT id FROM tags WHERE name = ANY($1)`, [
+      uniqueTags,
+    ]);
     const tagIds = tagRows.map((t) => t.id);
 
     if (tagIds.length > 0) {
@@ -115,9 +93,7 @@ export async function addTagsToPost(
     client.release();
   }
 }
-export async function findPostBySlugRaw(
-  slug: string
-): Promise<number | null> {
+export async function findPostBySlugRaw(slug: string): Promise<number | null> {
   const query = `SELECT id FROM posts WHERE slug = $1 LIMIT 1`;
   const { rows } = await pool.query(query, [slug]);
   return rows[0]?.id || null;
@@ -139,7 +115,7 @@ export async function findPosts(limit: number, tag: string | null): Promise<post
   `;
 
   try {
-    const params = tag ? [limit, tag] : [limit]; 
+    const params = tag ? [limit, tag] : [limit];
     const { rows } = await pool.query(query, params);
     return rows.map((row) => mapPostRow(row));
   } catch (error) {
@@ -150,10 +126,7 @@ export async function findPosts(limit: number, tag: string | null): Promise<post
   }
 }
 
-
-export async function findPostBySlug(
-  slug: string
-): Promise<postType | null> {
+export async function findPostBySlug(slug: string): Promise<postType | null> {
   const query = `
     SELECT 
       p.id, p.title, p.slug, p.content, p.author_id,

@@ -6,17 +6,12 @@ import {
   findPosts,
   findPostBySlugRaw,
   findPostBySlug,
-  getTags
+  getTags,
 } from './postModel.ts';
 import slugify from 'slugify';
 
-export async function registerPost(
-  body: postBodyType
-): Promise<postType> {
-  const {
-    title,
-    tags = [],
-  } = body;
+export async function registerPost(body: postBodyType): Promise<postType> {
+  const { title, tags = [] } = body;
 
   const slug = slugify(title, { lower: true, strict: true });
   const existing = await findPostBySlugRaw(slug);
@@ -29,9 +24,7 @@ export async function registerPost(
   const postData = { ...body, slug };
   const post = await createPost(postData);
 
-  const safeTags = tags.filter(
-    (t) => typeof t === 'string' && t.trim() !== ''
-  );
+  const safeTags = tags.filter((t) => typeof t === 'string' && t.trim() !== '');
   if (safeTags.length > 0) {
     await addTagsToPost(post.id, safeTags);
   }

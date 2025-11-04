@@ -2,11 +2,7 @@ import bcrypt from 'bcryptjs';
 import pool from '../db/pool.ts';
 import { DatabaseError } from 'pg';
 import { AppError } from '../utils/AppError.ts';
-import {
-  type userRowType,
-  type userType,
-  type createUserInsertType,
-} from './userTypes.ts';
+import { type userRowType, type userType, type createUserInsertType } from './userTypes.ts';
 
 const SALT_ROUNDS = Number(process.env.SALT_ROUNDS) || 10;
 
@@ -19,9 +15,7 @@ function mapUserRow(row: userRowType): userType {
   };
 }
 
-export async function createUser(
-  userData: createUserInsertType
-): Promise<userType> {
+export async function createUser(userData: createUserInsertType): Promise<userType> {
   const { firstName, lastName, email, password } = userData;
   const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
@@ -32,19 +26,12 @@ export async function createUser(
   `;
 
   try {
-    const { rows } = await pool.query(query, [
-      firstName,
-      lastName,
-      email,
-      hashedPassword,
-    ]);
+    const { rows } = await pool.query(query, [firstName, lastName, email, hashedPassword]);
 
     if (!rows[0]) {
       throw new AppError({
         statusCode: 500,
-        errorMessages: [
-          'Unexpected error: user not returned after creation',
-        ],
+        errorMessages: ['Unexpected error: user not returned after creation'],
       });
     }
 
@@ -65,9 +52,7 @@ export async function createUser(
   }
 }
 
-export async function findUserByEmail(
-  email: string
-): Promise<userRowType | null> {
+export async function findUserByEmail(email: string): Promise<userRowType | null> {
   const query = `
     SELECT id, first_name, last_name, email, password_hash
     FROM users
@@ -81,9 +66,7 @@ export async function findUserByEmail(
     console.error(error);
     throw new AppError({
       statusCode: 500,
-      errorMessages: [
-        'Database internal error while fetching user by email',
-      ],
+      errorMessages: ['Database internal error while fetching user by email'],
     });
   }
 }

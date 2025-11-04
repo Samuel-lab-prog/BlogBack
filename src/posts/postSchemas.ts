@@ -8,9 +8,7 @@ export const postBodySchema = t.Object({
     example: 'Como aprender JavaScript',
     error() {
       throw new AppError({
-        errorMessages: [
-          'Invalid title: must be between 3 and 150 characters',
-        ],
+        errorMessages: ['Invalid title: must be between 3 and 150 characters'],
         statusCode: 422,
       });
     },

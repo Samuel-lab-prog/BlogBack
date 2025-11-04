@@ -14,9 +14,7 @@ export class AppError extends Error {
   public errorMessages?: string[];
 
   constructor({ statusCode = 400, errorMessages }: errorsType) {
-    super(
-      errorMessages ? errorMessages.join(', ') : 'Application Error'
-    );
+    super(errorMessages ? errorMessages.join(', ') : 'Application Error');
     this.statusCode = statusCode;
     this.errorMessages = errorMessages;
   }

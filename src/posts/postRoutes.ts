@@ -1,10 +1,5 @@
 import { Elysia, t } from 'elysia';
-import {
-  registerPost,
-  listPosts,
-  getPostBySlug,
-  fetchTags
-} from './postController.ts';
+import { registerPost, listPosts, getPostBySlug, fetchTags } from './postController.ts';
 import { postBodySchema, postResponseSchema } from './postSchemas.ts';
 import { errorSchema } from '../utils/AppError.ts';
 
@@ -48,8 +43,9 @@ export const postRoutes = (app: Elysia) =>
             500: errorSchema,
           },
           detail: {
-            summary: 'List all posts with a limit (default 20). Optionally filter by tag.',
-            description: 'Returns all posts.',
+            summary: 'List posts',
+            description:
+              'Returns a list of posts, optionally filtered by tag and limited in number. (default limit is 20)',
             tags: ['Post'],
           },
         }

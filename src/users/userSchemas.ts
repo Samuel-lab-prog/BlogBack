@@ -7,9 +7,7 @@ export const registerUserBodySchema = t.Object({
     example: 'david@gmail.com',
     error() {
       throw new AppError({
-        errorMessages: [
-          'Invalid email format: email must be a valid email address',
-        ],
+        errorMessages: ['Invalid email format: email must be a valid email address'],
         statusCode: 422,
       });
     },
@@ -20,9 +18,7 @@ export const registerUserBodySchema = t.Object({
     example: '12345678',
     error() {
       throw new AppError({
-        errorMessages: [
-          'Invalid password format: password must be between 6 and 20 characters',
-        ],
+        errorMessages: ['Invalid password format: password must be between 6 and 20 characters'],
         statusCode: 422,
       });
     },
@@ -46,9 +42,7 @@ export const registerUserBodySchema = t.Object({
     example: 'Smith',
     error() {
       throw new AppError({
-        errorMessages: [
-          'Invalid last name format: last name must be between 3 and 30 characters',
-        ],
+        errorMessages: ['Invalid last name format: last name must be between 3 and 30 characters'],
         statusCode: 422,
       });
     },
@@ -68,9 +62,7 @@ export const loginUserBodySchema = t.Object({
     example: 'david@gmail.com',
     error() {
       throw new AppError({
-        errorMessages: [
-          'Invalid email format: email must be a valid email address',
-        ],
+        errorMessages: ['Invalid email format: email must be a valid email address'],
         statusCode: 422,
       });
     },
@@ -79,9 +71,7 @@ export const loginUserBodySchema = t.Object({
     example: '12345678',
     error() {
       throw new AppError({
-        errorMessages: [
-          'Invalid password format: password must be at least 6 characters long',
-        ],
+        errorMessages: ['Invalid password format: password must be at least 6 characters long'],
         statusCode: 422,
       });
     },

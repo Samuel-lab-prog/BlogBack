@@ -1,9 +1,5 @@
 import { AppError } from '../utils/AppError';
-import {
-  createUser,
-  findUserByEmail,
-  validatePassword,
-} from './userModel';
+import { createUser, findUserByEmail, validatePassword } from './userModel';
 import { generateToken } from '../utils/jwt';
 import {
   type userType,
@@ -12,16 +8,12 @@ import {
   type loginUserResponseType,
 } from './userTypes';
 
-export async function registerUser(
-  body: createUserBodyType
-): Promise<userType> {
+export async function registerUser(body: createUserBodyType): Promise<userType> {
   const user = await createUser(body);
   return user;
 }
 
-export async function loginUser(
-  body: loginUserBodyType
-): Promise<loginUserResponseType> {
+export async function loginUser(body: loginUserBodyType): Promise<loginUserResponseType> {
   const { email, password } = body;
   const user = await findUserByEmail(email);
   if (!user)
