@@ -13,7 +13,7 @@ function mapUserRow(row: UserRow): Omit<User, 'password'> {
   };
 }
  
-export async function createUser(userData: Omit<User, 'id' | 'isAdmin'>): Promise<Omit<User, 'password'>> {
+export async function insertUser(userData: Omit<User, 'id' | 'isAdmin'>): Promise<Omit<User, 'password'>> {
   const { firstName, lastName, email, password } = userData;
   const query = `
     INSERT INTO users (first_name, last_name, email, password_hash)
@@ -37,7 +37,7 @@ export async function createUser(userData: Omit<User, 'id' | 'isAdmin'>): Promis
   }
 }
 
-export async function findUserByEmail(email: string): Promise<UserRow | null> {
+export async function selectUserByEmail(email: string): Promise<UserRow | null> {
   const query = `
     SELECT *
     FROM users
@@ -54,7 +54,7 @@ export async function findUserByEmail(email: string): Promise<UserRow | null> {
   }
 }
 
-export async function findUserById(id: number): Promise<User | null> {
+export async function selectUserById(id: number): Promise<UserRow | null> {
   const query = `
     SELECT *
     FROM users
@@ -73,7 +73,7 @@ export async function findUserById(id: number): Promise<User | null> {
   }
 }
 
-export async function isAdmin(userId: number): Promise<boolean> {
+export async function selectIsAdmin(userId: number): Promise<boolean> {
   const query = `
     SELECT is_admin
     FROM users
