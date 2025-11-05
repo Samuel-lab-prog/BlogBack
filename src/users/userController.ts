@@ -1,6 +1,6 @@
 import { AppError } from '../utils/AppError';
-import { insertUser, selectUserByEmail } from './userModel';
-import { generateToken } from '../utils/jwt';
+import { insertUser, selectIsAdmin, selectUserByEmail } from './userModel';
+import { generateToken, verifyToken } from '../utils/jwt';
 import bcrypt from 'bcryptjs';
 import { type User } from './userTypes';
 
@@ -41,3 +41,15 @@ export async function loginUser(
   };
 }
 
+export async function authenticateUser(
+  token: string
+): Promise<boolean> {
+  const user = verifyToken(token);
+  if (!user) {
+    throw new AppError({
+      statusCode: 404,
+      errorMessages: ['User not found'],
+    });
+  }
+  return selectIsAdmin(user.id);
+}

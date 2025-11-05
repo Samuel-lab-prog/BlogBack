@@ -1,5 +1,5 @@
 import { Elysia, t } from 'elysia';
-import { registerUser, loginUser } from './userController';
+import { registerUser, loginUser, authenticateUser } from './userController';
 import { AppError, errorSchema } from '../utils/AppError';
 
 export const userRoutes = (app: Elysia) =>
@@ -142,6 +142,41 @@ export const userRoutes = (app: Elysia) =>
 
         }
       )
-  );
+      .get('/auth', async ({ cookie: { token }, set }) => {
+        const isAdmin = await authenticateUser(token.value as string);
+        if(!isAdmin) {
+          throw new AppError({
+            statusCode: 403,
+            errorMessages: ['Access denied: Admins only'],
+          });
+        }
+        set.status = 204
+      },{
+        cookie: t.Cookie({
+          token: t.String({
+            description: 'JWT token stored in an HTTP-only cookie for authentication.',
+            examples: ['eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJpYXQiOjE2OTAzMjU2MDAsImV4cCI6MTY5MDMyOTIwMH0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'],
+            error() {
+              throw new AppError({
+                statusCode: 400,
+                errorMessages: ['Authentication token is required in cookies'],
+              });
+            }
+          }),
+        }),
+        response: {
+          204: t.Void({ description: 'Success: User is an admin.' }),
+          403: t.Object({ errorSchema }, { description: 'Forbidden: Access denied for non-admin users.' }),
+          404: t.Object({ errorSchema }, { description: 'Not Found: User not found.' }),
+          500: t.Object({ errorSchema }, { description: 'Internal Server Error: Unexpected error occurred.' }),
+        },
+        detail: {
+          summary: 'Check admin status',
+          description:
+            'Verifies the JWT token from the cookie and checks if the user is an admin.',
+          tags: ['User'],
+        },
+      }));
+  
 
 
