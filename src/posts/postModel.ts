@@ -1,7 +1,7 @@
 import { DatabaseError } from 'pg';
 import { AppError } from '../utils/AppError.ts';
 import pool from '../db/pool.ts';
-import type { postRowType, postType, insertPostType } from './postTypes.ts';
+import type { postRowType, postType } from './postTypes.ts';
 
 function mapPostRow(row: postRowType): postType {
   return {
@@ -17,7 +17,7 @@ function mapPostRow(row: postRowType): postType {
   };
 }
 
-export async function createPost(postData: insertPostType): Promise<postType> {
+export async function insertPost(postData: Omit<postType, 'id' | 'createdAt' | 'updatedAt'>): Promise<postType> {
   const query = `
     INSERT INTO posts (title, slug, content, author_id, excerpt)
     VALUES ($1, $2, $3, $4, $5)
@@ -49,7 +49,7 @@ export async function createPost(postData: insertPostType): Promise<postType> {
   }
 }
 
-export async function addTagsToPost(postId: number, tagNames: string[]): Promise<number> {
+export async function insertTagsIntoPost(postId: number, tagNames: string[]): Promise<number> {
   if (tagNames.length === 0) return 0;
   const client = await pool.connect();
 
@@ -93,16 +93,16 @@ export async function addTagsToPost(postId: number, tagNames: string[]): Promise
     client.release();
   }
 }
-export async function findPostBySlugRaw(slug: string): Promise<number | null> {
+export async function selectPostBySlugRaw(slug: string): Promise<number | null> {
   const query = `SELECT id FROM posts WHERE slug = $1 LIMIT 1`;
   const { rows } = await pool.query(query, [slug]);
   return rows[0]?.id || null;
 }
 
-export async function findPosts(limit: number, tag: string | null): Promise<postType[]> {
+export async function selectPosts(limit: number, tag: string | null): Promise<postType[]> {
   const query = `
     SELECT 
-      p.id, p.title, p.slug, p.content, p.author_id,
+      p.title, p.slug, p.id,
       p.created_at, p.updated_at, p.excerpt,
       json_agg(t.name) FILTER (WHERE t.name IS NOT NULL) AS tags
     FROM posts p
@@ -126,7 +126,7 @@ export async function findPosts(limit: number, tag: string | null): Promise<post
   }
 }
 
-export async function findPostBySlug(slug: string): Promise<postType | null> {
+export async function selectPostBySlug(slug: string): Promise<postType | null> {
   const query = `
     SELECT 
       p.id, p.title, p.slug, p.content, p.author_id,
@@ -143,7 +143,7 @@ export async function findPostBySlug(slug: string): Promise<postType | null> {
   return rows[0] ? mapPostRow(rows[0]) : null;
 }
 
-export async function getTags(): Promise<string[]> {
+export async function selectTags(): Promise<string[]> {
   const query = `SELECT DISTINCT name FROM tags ORDER BY name ASC`;
   const { rows } = await pool.query(query);
   return rows.map((row) => row.name);

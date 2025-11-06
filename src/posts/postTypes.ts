@@ -22,18 +22,3 @@ export type postType = {
   tags: string[];
 };
 
-export type insertPostType = {
-  title: string;
-  slug: string;
-  excerpt: string;
-  content: string;
-  authorId: number;
-};
-
-export type postBodyType = {
-  title: string;
-  content: string;
-  excerpt: string;
-  authorId: number;
-  tags: string[];
-};
