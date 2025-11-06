@@ -22,7 +22,7 @@ export const userRoutes = (app: Elysia) =>
                   statusCode: 400,
                   errorMessages: ['Email must be a valid email address'],
                 });
-              }
+              },
             }),
             password: t.String({
               minLength: 6,
@@ -33,7 +33,7 @@ export const userRoutes = (app: Elysia) =>
                   statusCode: 400,
                   errorMessages: ['Password must be between 6 and 30 characters long'],
                 });
-              }
+              },
             }),
             firstName: t.String({
               minLength: 3,
@@ -44,7 +44,7 @@ export const userRoutes = (app: Elysia) =>
                   statusCode: 400,
                   errorMessages: ['First name must be between 3 and 30 characters long'],
                 });
-              }
+              },
             }),
             lastName: t.String({
               minLength: 3,
@@ -55,24 +55,32 @@ export const userRoutes = (app: Elysia) =>
                   statusCode: 400,
                   errorMessages: ['Last name must be between 3 and 30 characters long'],
                 });
-              }
+              },
             }),
           }),
           response: {
-            201: t.Object({
-              id: t.Number(),
-              email: t.String(),
-              firstName: t.String(),
-              lastName: t.String(),
-            }, { description: 'User successfully registered: Returns users\'s first name and last name.', }),
-            400: t.Object({ errorSchema }, { description: 'Bad Request: Invalid request body.', }),
-            409: t.Object({ errorSchema }, { description: 'Conflict: Email already registered.', }),
-            500: t.Object({ errorSchema }, { description: 'Internal Server Error: Unexpected error occurred.', }),
+            201: t.Object(
+              {
+                id: t.Number(),
+                email: t.String(),
+                firstName: t.String(),
+                lastName: t.String(),
+              },
+              {
+                description:
+                  "User successfully registered: Returns users's first name and last name.",
+              }
+            ),
+            400: t.Object({ errorSchema }, { description: 'Bad Request: Invalid request body.' }),
+            409: t.Object({ errorSchema }, { description: 'Conflict: Email already registered.' }),
+            500: t.Object(
+              { errorSchema },
+              { description: 'Internal Server Error: Unexpected error occurred.' }
+            ),
           },
           detail: {
             summary: 'Register a new user',
-            description:
-              'Creates a new user. Returns the first and last name of the user.',
+            description: 'Creates a new user. Returns the first and last name of the user.',
             tags: ['User'],
           },
         }
@@ -80,20 +88,23 @@ export const userRoutes = (app: Elysia) =>
 
       .post(
         '/login',
-        async ({ body, set }) => {
+        async ({ body, cookie }) => {
           const { token, user } = await loginUser(body);
-          set.cookie = {
-            token: {
-              value: token,
-              httpOnly: true,
-            },
-          };
-          set.headers = {
-            cookie: `token=${token}`,
-          };
+          cookie.token.value = token;
           return user;
         },
         {
+          cookie: t.Cookie(
+            {
+              token: t.String({
+                description:
+                  'JWT token declared with an empty value to be set upon successful login.',
+              }),
+            },
+            {
+              value: '',
+            }
+          ),
           body: t.Object({
             email: t.String({
               format: 'email',
@@ -103,7 +114,7 @@ export const userRoutes = (app: Elysia) =>
                   statusCode: 400,
                   errorMessages: ['Email must be a valid email address'],
                 });
-              }
+              },
             }),
             password: t.String({
               minLength: 6,
@@ -114,69 +125,89 @@ export const userRoutes = (app: Elysia) =>
                   statusCode: 400,
                   errorMessages: ['Password must be between 6 and 30 characters long'],
                 });
-              }
+              },
             }),
           }),
 
           response: {
-            200: t.Object({
-              firstName: t.String(),
-              lastName: t.String(),
-            }, { description: 'Successful login response: Returns the user first and last name and sets a cookie with the JWT token.', }),
-            400: t.Object({
-              errorSchema,
-            }, { description: 'Bad Request: Invalid request body.', }),
-            401: t.Object({
-              errorSchema,
-            }, { description: 'Unauthorized: Invalid credentials.', }),
-            500: t.Object({
-              errorSchema,
-            }, { description: 'Internal Server Error: Unexpected error occurred.', }),
+            200: t.Object(
+              {
+                firstName: t.String(),
+                lastName: t.String(),
+              },
+              {
+                description:
+                  'Successful login response: Returns the user first and last name and sets a cookie with the JWT token.',
+              }
+            ),
+            400: t.Object(
+              {
+                errorSchema,
+              },
+              { description: 'Bad Request: Invalid request body.' }
+            ),
+            401: t.Object(
+              {
+                errorSchema,
+              },
+              { description: 'Unauthorized: Invalid credentials.' }
+            ),
+            500: t.Object(
+              {
+                errorSchema,
+              },
+              { description: 'Internal Server Error: Unexpected error occurred.' }
+            ),
           },
           detail: {
             summary: 'Login a user',
-            description:
-              'Authenticates a user and returns a JWT token in an HTTP-only cookie.',
+            description: 'Authenticates a user and returns a JWT token in an HTTP-only cookie.',
             tags: ['User'],
           },
-
         }
       )
-      .get('/auth', async ({ cookie: { token }, set }) => {
-        const isAdmin = await authenticateUser(token.value as string);
-        if(!isAdmin) {
-          throw new AppError({
-            statusCode: 403,
-            errorMessages: ['Access denied: Admins only'],
-          });
-        }
-        set.status = 204
-      },{
-        cookie: t.Cookie({
-          token: t.String({
-            description: 'JWT token stored in an HTTP-only cookie for authentication.',
-            examples: ['eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJkYXZpZEBnbWFpbC5jb20iLCJpYXQiOjE2OTAzMjU2MDAsImV4cCI6MTY5MDMyOTIwMH0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'],
-            error() {
-              throw new AppError({
-                statusCode: 400,
-                errorMessages: ['Authentication token is required in cookies'],
-              });
-            }
+      .get(
+        '/auth',
+        async ({ cookie: { token }, set }) => {
+          const isAdmin = await authenticateUser(token.value as string);
+          if (!isAdmin) {
+            throw new AppError({
+              statusCode: 403,
+              errorMessages: ['Access denied: Admins only'],
+            });
+          }
+          set.status = 204;
+        },
+        {
+          cookie: t.Cookie({
+            token: t.String({
+              description: 'JWT token stored in an HTTP-only cookie for authentication.',
+              error() {
+                throw new AppError({
+                  statusCode: 400,
+                  errorMessages: ['Authentication token is required in cookies'],
+                });
+              },
+            }),
           }),
-        }),
-        response: {
-          204: t.Void({ description: 'Success: User is an admin.' }),
-          403: t.Object({ errorSchema }, { description: 'Forbidden: Access denied for non-admin users.' }),
-          404: t.Object({ errorSchema }, { description: 'Not Found: User not found.' }),
-          500: t.Object({ errorSchema }, { description: 'Internal Server Error: Unexpected error occurred.' }),
-        },
-        detail: {
-          summary: 'Check admin status',
-          description:
-            'Verifies the JWT token from the cookie and checks if the user is an admin.',
-          tags: ['User'],
-        },
-      }));
-  
-
-
+          response: {
+            204: t.Void({ description: 'Success: User is an admin.' }),
+            403: t.Object(
+              { errorSchema },
+              { description: 'Forbidden: Access denied for non-admin users.' }
+            ),
+            404: t.Object({ errorSchema }, { description: 'Not Found: User not found.' }),
+            500: t.Object(
+              { errorSchema },
+              { description: 'Internal Server Error: Unexpected error occurred.' }
+            ),
+          },
+          detail: {
+            summary: 'Check admin status',
+            description:
+              'Verifies the JWT token from the cookie and checks if the user is an admin.',
+            tags: ['User'],
+          },
+        }
+      )
+  );

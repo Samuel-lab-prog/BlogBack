@@ -32,3 +32,11 @@ CREATE TABLE post_tags (
     tag_id INTEGER REFERENCES tags(id) ON DELETE CASCADE,
     PRIMARY KEY (post_id, tag_id)
 );
+
+DELETE FROM users
+SELECT * FROM users
+ALTER SEQUENCE users_id_seq RESTART WITH 1;
+
+UPDATE users
+set is_admin = true
+WHERE id = 1

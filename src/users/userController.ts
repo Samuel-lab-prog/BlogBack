@@ -1,6 +1,6 @@
 import { AppError } from '../utils/AppError';
 import { insertUser, selectIsAdmin, selectUserByEmail } from './userModel';
-import { generateToken, verifyToken } from '../utils/jwt';
+import { generateToken, verifyToken, type Payload } from '../utils/jwt';
 import bcrypt from 'bcryptjs';
 import { type User } from './userTypes';
 
@@ -31,7 +31,7 @@ export async function loginUser(
       errorMessages: ['Invalid credentials'],
     });
   }
-  const token = generateToken({ id: user.id, email: user.email });
+  const token = generateToken({ id: user.id, email: user.email } as Payload);
   return {
     token,
     user: {
@@ -41,9 +41,7 @@ export async function loginUser(
   };
 }
 
-export async function authenticateUser(
-  token: string
-): Promise<boolean> {
+export async function authenticateUser(token: string): Promise<boolean> {
   const user = verifyToken(token);
   if (!user) {
     throw new AppError({
@@ -51,5 +49,5 @@ export async function authenticateUser(
       errorMessages: ['User not found'],
     });
   }
-  return selectIsAdmin(user.id);
+  return await selectIsAdmin(user.id);
 }

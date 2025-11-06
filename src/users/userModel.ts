@@ -12,8 +12,10 @@ function mapUserRow(row: UserRow): Omit<User, 'password'> {
     isAdmin: row.is_admin,
   };
 }
- 
-export async function insertUser(userData: Omit<User, 'id' | 'isAdmin'>): Promise<Omit<User, 'password'>> {
+
+export async function insertUser(
+  userData: Omit<User, 'id' | 'isAdmin'>
+): Promise<Omit<User, 'password'>> {
   const { firstName, lastName, email, password } = userData;
   const query = `
     INSERT INTO users (first_name, last_name, email, password_hash)
@@ -49,7 +51,9 @@ export async function selectUserByEmail(email: string): Promise<UserRow | null> 
   } catch (error: unknown) {
     throw new AppError({
       statusCode: 500,
-      errorMessages: ['Database internal error while getting user by email: ' + (error as Error).message],
+      errorMessages: [
+        'Database internal error while getting user by email: ' + (error as Error).message,
+      ],
     });
   }
 }
@@ -68,7 +72,9 @@ export async function selectUserById(id: number): Promise<UserRow | null> {
     console.error(error);
     throw new AppError({
       statusCode: 500,
-      errorMessages: ['Database internal error while fetching user by ID: ' + (error as Error).message],
+      errorMessages: [
+        'Database internal error while fetching user by ID: ' + (error as Error).message,
+      ],
     });
   }
 }
@@ -92,4 +98,3 @@ export async function selectIsAdmin(userId: number): Promise<boolean> {
     });
   }
 }
-
