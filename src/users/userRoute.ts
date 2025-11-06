@@ -2,6 +2,53 @@ import { Elysia, t } from 'elysia';
 import { registerUser, loginUser, authenticateUser } from './userController';
 import { AppError, errorSchema } from '../utils/AppError';
 
+const emailField = t.String({
+  format: 'email',
+  example: 'david@gmail.com',
+  error() {
+    throw new AppError({
+      statusCode: 400,
+      errorMessages: ['Email must be a valid email address'],
+    });
+  },
+});
+
+const passwordField = t.String({
+  minLength: 6,
+  maxLength: 30,
+  example: '12345678',
+  error() {
+    throw new AppError({
+      statusCode: 400,
+      errorMessages: ['Password must be between 6 and 30 characters long'],
+    });
+  },
+});
+
+const firstNameField = t.String({
+  minLength: 3,
+  maxLength: 30,
+  example: 'David',
+  error() {
+    throw new AppError({
+      statusCode: 400,
+      errorMessages: ['First name must be between 3 and 30 characters long'],
+    });
+  },
+});
+
+const lastNameField = t.String({
+  minLength: 3,
+  maxLength: 30,
+  example: 'Smith',
+  error() {
+    throw new AppError({
+      statusCode: 400,
+      errorMessages: ['Last name must be between 3 and 30 characters long'],
+    });
+  },
+});
+
 export const userRoutes = (app: Elysia) =>
   app.group('/users', (app) =>
     app
@@ -14,49 +61,10 @@ export const userRoutes = (app: Elysia) =>
         },
         {
           body: t.Object({
-            email: t.String({
-              format: 'email',
-              example: 'david@gmail.com',
-              error() {
-                throw new AppError({
-                  statusCode: 400,
-                  errorMessages: ['Email must be a valid email address'],
-                });
-              },
-            }),
-            password: t.String({
-              minLength: 6,
-              maxLength: 30,
-              example: '12345678',
-              error() {
-                throw new AppError({
-                  statusCode: 400,
-                  errorMessages: ['Password must be between 6 and 30 characters long'],
-                });
-              },
-            }),
-            firstName: t.String({
-              minLength: 3,
-              maxLength: 30,
-              example: 'David',
-              error() {
-                throw new AppError({
-                  statusCode: 400,
-                  errorMessages: ['First name must be between 3 and 30 characters long'],
-                });
-              },
-            }),
-            lastName: t.String({
-              minLength: 3,
-              maxLength: 30,
-              example: 'Smith',
-              error() {
-                throw new AppError({
-                  statusCode: 400,
-                  errorMessages: ['Last name must be between 3 and 30 characters long'],
-                });
-              },
-            }),
+            email: emailField,
+            password: passwordField,
+            firstName: firstNameField,
+            lastName: lastNameField,
           }),
           response: {
             201: t.Object(
@@ -106,27 +114,8 @@ export const userRoutes = (app: Elysia) =>
             }
           ),
           body: t.Object({
-            email: t.String({
-              format: 'email',
-              example: 'david@gmail.com',
-              error() {
-                throw new AppError({
-                  statusCode: 400,
-                  errorMessages: ['Email must be a valid email address'],
-                });
-              },
-            }),
-            password: t.String({
-              minLength: 6,
-              maxLength: 30,
-              example: '12345678',
-              error() {
-                throw new AppError({
-                  statusCode: 400,
-                  errorMessages: ['Password must be between 6 and 30 characters long'],
-                });
-              },
-            }),
+            email: emailField,
+            password: passwordField,
           }),
 
           response: {
@@ -169,7 +158,7 @@ export const userRoutes = (app: Elysia) =>
       .get(
         '/auth',
         async ({ cookie: { token }, set }) => {
-          const isAdmin = await authenticateUser(token.value as string);
+          const isAdmin = await authenticateUser(token.value);
           if (!isAdmin) {
             throw new AppError({
               statusCode: 403,
