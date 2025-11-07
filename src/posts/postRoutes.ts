@@ -1,5 +1,5 @@
 import { Elysia, t } from 'elysia';
-import { registerPost, listPosts, getPostBySlug, fetchTags } from './postController.ts';
+import { registerPost, listPosts, getPostBySlug, fetchTags, excludePostById } from './postController.ts';
 import { errorSchema, AppError } from '../utils/AppError.ts';
 
 const titleField = t.String({
@@ -173,4 +173,41 @@ export const postRoutes = (app: Elysia) =>
           },
         }
       )
-  );
+      .delete(
+        '/:id',
+        async ({ params, set }) => {
+          const success = await excludePostById(params.id);
+          if (success) {
+            set.status = 204;
+          } else {
+            throw new AppError({
+              statusCode: 404,
+              errorMessages: ['Post not found'],
+            });
+          }
+        },
+        {
+          params: t.Object({
+            id: t.Number({
+              example: 1,
+              error() {
+                throw new AppError({
+                  errorMessages: ['Invalid post ID'],
+                  statusCode: 422,
+                });
+              },
+            }),
+          }),
+          response: {
+            204: t.Void(),
+            404: errorSchema,
+            500: errorSchema,
+          },
+          detail: {
+            summary: 'Delete a post by ID',
+            description: 'Removes a post from the database by its ID.',
+            tags: ['Post'],
+          },
+        }
+      )
+    );

@@ -148,3 +148,33 @@ export async function selectTags(): Promise<string[]> {
   const { rows } = await pool.query(query);
   return rows.map((row) => row.name);
 }
+
+export async function deletePostById(id: number): Promise<number | null> {
+  const query = `DELETE FROM posts WHERE id = $1`;
+  try{
+    const { rowCount } = await pool.query(query, [id]);
+    return rowCount;
+  }
+  catch(error){
+    throw new AppError({
+      statusCode: 500,
+      errorMessages: ['Failed to delete post:' + error],
+    });
+  }
+}
+export async function deleteOrphanTags(): Promise<number | null> {
+  try {
+    const query = `
+      DELETE FROM tags
+      WHERE id NOT IN (SELECT DISTINCT tag_id FROM post_tags)
+    `;
+    const { rowCount } = await pool.query(query);
+    return rowCount;
+  }
+  catch(error){
+    throw new AppError({
+      statusCode: 500,
+      errorMessages: ['Failed to delete orphan tags:' + error],
+    });
+  }
+}

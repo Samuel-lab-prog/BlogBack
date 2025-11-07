@@ -7,6 +7,8 @@ import {
   selectPostBySlugRaw,
   selectPostBySlug,
   selectTags,
+  deletePostById,
+  deleteOrphanTags,
 } from './postModel.ts';
 import slugify from 'slugify';
 
@@ -47,4 +49,10 @@ export async function getPostBySlug(slug: string): Promise<postType> {
 }
 export async function fetchTags(): Promise<string[]> {
   return await selectTags();
+}
+
+export async function excludePostById(id: number): Promise<boolean> {
+  const success = await deletePostById(id);
+  const tagsDeleted = await deleteOrphanTags();
+  return Boolean(success) && Boolean(tagsDeleted);
 }
