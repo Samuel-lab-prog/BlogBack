@@ -1,6 +1,7 @@
 import Elysia from 'elysia';
 import { openapi } from '@elysiajs/openapi';
 import cors from '@elysiajs/cors';
+import jwt from '@elysiajs/jwt';
 
 import { AppError } from './utils/AppError';
 import { userRoutes } from './users/userRoute';
@@ -36,12 +37,12 @@ const app = new Elysia()
       );
     }
     console.error('Unexpected Error:', (error as Error).message);
-    const message = (error as Error).message || 'Internal Server Error';
     const statusCode = typeof set.status === 'number' ? set.status : 500;
     return new Response(
       JSON.stringify({
-        errorMessages: [message],
+        errorMessages: ['An unexpected error occurred' ],
         statusCode: statusCode,
+        originalError: (error as Error),
       }),
       {
         status: statusCode,
@@ -49,6 +50,11 @@ const app = new Elysia()
       }
     );
   })
+  .use(jwt({
+    secret: process.env.JWT_SECRET?.toString() || 'supersecretkey',
+    name: 'token',
+  }))
+
   .use(userRoutes)
   .use(postRoutes)
   .listen({ port: Number(process.env.PORT) || 3000 });

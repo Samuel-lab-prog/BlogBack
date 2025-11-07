@@ -12,10 +12,12 @@ export const errorSchema = t.Object({
 export class AppError extends Error {
   public statusCode: number;
   public errorMessages: string[];
+  public originalError?: Error;
 
-  constructor({ statusCode = 500, errorMessages = ['Application Error'] }: errorsType) {
+  constructor({ statusCode = 500, errorMessages = ['Application Error'], originalError }: errorsType & { originalError?: Error }) {
     super(errorMessages.join(', '));
     this.statusCode = statusCode;
     this.errorMessages = errorMessages;
+    this.originalError = originalError;
   }
 }

@@ -17,7 +17,7 @@ CREATE TABLE tags (
 CREATE TABLE posts (
     id SERIAL PRIMARY KEY,
     title VARCHAR(150) NOT NULL,
-	excerpt varchar(150) NOT NULL,
+	excerpt VARCHAR(150) NOT NULL,
     slug VARCHAR(150) UNIQUE NOT NULL,
     content TEXT NOT NULL,
     author_id INTEGER NOT NULL,

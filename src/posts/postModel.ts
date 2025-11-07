@@ -42,19 +42,19 @@ export async function insertPost(
       throw new AppError({
         statusCode: 409,
         errorMessages: ['Slug already in use'],
+        originalError: error as Error
       });
     }
     throw new AppError({
       statusCode: 500,
       errorMessages: ['Database internal error while creating post.'],
+      originalError: error as Error
     });
   }
 }
 
 export async function insertTagsIntoPost(postId: number, tagNames: string[]): Promise<number> {
-  if (tagNames.length === 0) return 0;
   const client = await pool.connect();
-
   try {
     await client.query('BEGIN');
     await client.query(
@@ -88,22 +88,18 @@ export async function insertTagsIntoPost(postId: number, tagNames: string[]): Pr
     console.error(error);
     throw new AppError({
       statusCode: 500,
-      errorMessages: ['Failed to associate tags to post ' + error],
+      errorMessages: ['Failed to associate tags to post'],
+      originalError: error as Error
     });
   } finally {
     client.release();
   }
 }
-export async function selectPostBySlugRaw(slug: string): Promise<number | null> {
-  const query = `SELECT id FROM posts WHERE slug = $1 LIMIT 1`;
-  const { rows } = await pool.query(query, [slug]);
-  return rows[0]?.id || null;
-}
 
-export async function selectPosts(limit: number, tag: string | null): Promise<postType[]> {
+export async function selectPosts(limit: number, tag: string | null): Promise<Omit<postType, 'content' | 'authorId' | 'slug' | 'id'>[]> {
   const query = `
     SELECT 
-      p.title, p.slug, p.id,
+      p.title, 
       p.created_at, p.updated_at, p.excerpt,
       json_agg(t.name) FILTER (WHERE t.name IS NOT NULL) AS tags
     FROM posts p
@@ -122,7 +118,8 @@ export async function selectPosts(limit: number, tag: string | null): Promise<po
   } catch (error) {
     throw new AppError({
       statusCode: 500,
-      errorMessages: ['Database internal error while listing posts: ' + error],
+      errorMessages: ['Database internal error while listing posts'],
+      originalError: error as Error
     });
   }
 }
@@ -130,7 +127,7 @@ export async function selectPosts(limit: number, tag: string | null): Promise<po
 export async function selectPostBySlug(slug: string): Promise<postType | null> {
   const query = `
     SELECT 
-      p.id, p.title, p.slug, p.content, p.author_id,
+      p.title, p.slug, p.content,
       p.created_at, p.updated_at, p.excerpt,
       json_agg(t.name) FILTER (WHERE t.name IS NOT NULL) AS tags
     FROM posts p
@@ -144,58 +141,61 @@ export async function selectPostBySlug(slug: string): Promise<postType | null> {
   return rows[0] ? mapPostRow(rows[0]) : null;
 }
 
-export async function selectTags(): Promise<string[]> {
+export async function selectAllUniqueTags(): Promise<string[]> {
   const query = `SELECT DISTINCT name FROM tags ORDER BY name ASC`;
   const { rows } = await pool.query(query);
   return rows.map((row) => row.name);
 }
 
-export async function deletePostById(id: number): Promise<number | null> {
-  const query = `DELETE FROM posts WHERE id = $1`;
+export async function deletePostBySlug(slug: string): Promise<boolean> {
+  const query = `DELETE FROM posts WHERE slug = $1`;
   try {
-    const { rowCount } = await pool.query(query, [id]);
-    return rowCount;
+    const { rowCount } = await pool.query(query, [slug]);
+    return Boolean(rowCount);
   } catch (error) {
     throw new AppError({
       statusCode: 500,
-      errorMessages: ['Failed to delete post:' + error],
+      errorMessages: ['Failed to delete post'],
+      originalError: error as Error
     });
   }
 }
-export async function deleteOrphanTags(): Promise<number | null> {
+export async function deleteOrphanTags(): Promise<boolean> {
   try {
     const query = `
       DELETE FROM tags
       WHERE id NOT IN (SELECT DISTINCT tag_id FROM post_tags)
     `;
     const { rowCount } = await pool.query(query);
-    return rowCount;
+    return Boolean(rowCount);
   } catch (error) {
     throw new AppError({
       statusCode: 500,
-      errorMessages: ['Failed to delete orphan tags:' + error],
+      errorMessages: ['Failed to delete orphan tags'],
+      originalError: error as Error
     });
   }
 }
-export async function deleteTagsFromPost(postId: number): Promise<number | null> {
+export async function deleteTagsFromPost(postId: number): Promise<boolean> {
   try {
     const query = `
       DELETE FROM post_tags
       WHERE post_id = $1
     `;
     const { rowCount } = await pool.query(query, [postId]);
-    return rowCount;
+    return Boolean(rowCount);
   } catch (error) {
     throw new AppError({
       statusCode: 500,
-      errorMessages: ['Failed to delete tags from post:' + error],
+      errorMessages: ['Failed to delete tags from post'],
+      originalError: error as Error
     });
   }
 }
-export async function updatePostById(
-  id: number,
+export async function updatePostBySlug(
+  slug: string,
   newData: Partial<Omit<postType, 'id' | 'createdAt' | 'updatedAt' | 'authorId'>>
-): Promise<postType | null> {
+): Promise<boolean> {
   const fields = [];
   const values = [];
   let index = 1;
@@ -209,15 +209,16 @@ export async function updatePostById(
     const query = `
       UPDATE posts
       SET ${fields.join(', ')}
-      WHERE id = $${index}
+      WHERE slug = $${index}
       RETURNING *
     `;
-    const { rows } = await pool.query(query, [...values, id]);
-    return mapPostRow(rows[0]);
+    const { rows } = await pool.query(query, [...values, slug]);
+    return Boolean(rows[0]);
   } catch (error) {
     throw new AppError({
       statusCode: 500,
-      errorMessages: ['Failed to update post:' + error],
+      errorMessages: ['Failed to update post'],
+      originalError: error as Error
     });
   }
 }

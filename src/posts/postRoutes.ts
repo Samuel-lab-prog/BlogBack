@@ -2,10 +2,10 @@ import { Elysia, t } from 'elysia';
 import {
   registerPost,
   listPosts,
-  getPostBySlug,
+  getPostByTitle,
   fetchTags,
-  excludePostById,
-  refreshPost,
+  excludePostByTitle,
+  refreshPostByTitle,
 } from './postController.ts';
 import { errorSchema, AppError } from '../utils/AppError.ts';
 
@@ -44,15 +44,6 @@ const excerptField = t.String({
   },
 });
 
-const authorIdField = t.Number({
-  example: 1,
-  error() {
-    throw new AppError({
-      errorMessages: ['Invalid author ID'],
-      statusCode: 422,
-    });
-  },
-});
 const tagsField = t.Array(t.String({ example: 'JavaScript' }), {
   minItems: 1,
   error() {
@@ -69,30 +60,28 @@ export const postRoutes = (app: Elysia) =>
       .post(
         '/',
         async ({ body, set }) => {
-          const post = await registerPost(body);
+          await registerPost(body);
           set.status = 201;
-          return post;
         },
         {
           body: t.Object({
             title: titleField,
             content: contentField,
             excerpt: excerptField,
-            authorId: authorIdField,
             tags: tagsField,
+          },{
+            examples: {
+              'application/json': {
+                title: 'How to learn anything fast',
+                content: 'Have you ever wanted to learn something new but felt overwhelmed by the amount of information out there? In this post, I will share some tips and strategies that helped me learn new skills quickly and effectively. First, set clear goals and break down the learning process into manageable chunks. Second, use active learning techniques such as summarizing, questioning, and teaching others. Third, practice regularly and seek feedback to improve your understanding. By following these steps, you can accelerate your learning and achieve your goals faster than you thought possible.',
+                excerpt: 'Learning don\'t have to be hard. Here are some tips to learn anything fast!',
+                authorId: 1,
+                tags: ['JavaScript', 'Programming'],
+              },
+            },
           }),
           response: {
-            201: t.Object({
-              id: t.Number(),
-              title: t.String(),
-              slug: t.String(),
-              content: t.String(),
-              excerpt: t.String(),
-              authorId: t.Number(),
-              createdAt: t.String(),
-              updatedAt: t.String(),
-              tags: t.Array(t.String()),
-            }),
+            201: t.Void(),
             400: errorSchema,
             422: errorSchema,
             409: errorSchema,
@@ -100,7 +89,7 @@ export const postRoutes = (app: Elysia) =>
           },
           detail: {
             summary: 'Create a new post',
-            description: 'Creates a new post with title, content, excerpt, authorId and tags.',
+            description: 'Creates a new post with title, content, excerpt, and tags.',
             tags: ['Post'],
           },
         }
@@ -109,16 +98,13 @@ export const postRoutes = (app: Elysia) =>
         '/',
         async ({ query }) => {
           const { limit = '20', tag = null } = query;
-          const normalizedTag = tag === '' ? null : tag;
-          return await listPosts(Number(limit), normalizedTag);
+          return await listPosts(Number(limit), tag);
         },
         {
           response: {
             200: t.Array(
               t.Object({
-                id: t.Number(),
                 title: t.String(),
-                slug: t.String(),
                 excerpt: t.String(),
                 createdAt: t.String(),
                 updatedAt: t.String(),
@@ -130,26 +116,23 @@ export const postRoutes = (app: Elysia) =>
           detail: {
             summary: 'List posts',
             description:
-              'Returns a list of posts, omitting the content and authorId for performance reasons. Optionally filtered by tag and limited in number (default limit is 20)',
+              'Returns a list of posts, including only the title, excerpt, createdAt, updatedAt, and tags for performance reasons. Optionally filtered by tag and limited in number (default limit is 20)',
             tags: ['Post'],
           },
         }
       )
       .get(
-        '/:slug',
+        '/:title',
         async ({ params }) => {
-          const post = await getPostBySlug(params.slug);
-          return post;
+          return await getPostByTitle(params.title);
         },
         {
           response: {
             200: t.Object({
-              id: t.Number(),
               title: t.String(),
               slug: t.String(),
               content: t.String(),
               excerpt: t.String(),
-              authorId: t.Number(),
               createdAt: t.String(),
               updatedAt: t.String(),
               tags: t.Array(t.String()),
@@ -158,8 +141,8 @@ export const postRoutes = (app: Elysia) =>
             500: errorSchema,
           },
           detail: {
-            summary: 'Get a post by slug',
-            description: 'Fetch all properties of a single post by its slug.',
+            summary: 'Get a post by title',
+            description: 'Fetch all properties except id and authorId of a single post by its title.',
             tags: ['Post'],
           },
         }
@@ -167,8 +150,7 @@ export const postRoutes = (app: Elysia) =>
       .get(
         '/tags',
         async () => {
-          const tags = await fetchTags();
-          return tags;
+          return await fetchTags();
         },
         {
           response: {
@@ -183,25 +165,18 @@ export const postRoutes = (app: Elysia) =>
         }
       )
       .delete(
-        '/:id',
+        '/:title',
         async ({ params, set }) => {
-          const success = await excludePostById(params.id);
-          if (success) {
-            set.status = 204;
-          } else {
-            throw new AppError({
-              statusCode: 404,
-              errorMessages: ['Post not found'],
-            });
-          }
+          await excludePostByTitle(params.title);
+          set.status = 204;
         },
         {
           params: t.Object({
-            id: t.Number({
-              example: 1,
+            title: t.String({
+              example: 'Diário de Estudo',
               error() {
                 throw new AppError({
-                  errorMessages: ['Invalid post ID'],
+                  errorMessages: ['Invalid post title'],
                   statusCode: 422,
                 });
               },
@@ -213,19 +188,20 @@ export const postRoutes = (app: Elysia) =>
             500: errorSchema,
           },
           detail: {
-            summary: 'Delete a post by ID',
-            description: 'Removes a post from the database by its ID.',
+            summary: 'Delete a post by title',
+            description: 'Removes a post from the database by its title.',
             tags: ['Post'],
           },
         }
       )
       .patch(
-        '/:id',
-        async ({ params, body }) => {
-          const updatedPost = await refreshPost(params.id, body);
-          return updatedPost;
+        '/:title',
+        async ({ params, body, set }) => {
+        await refreshPostByTitle(params.title, body);
+        set.status = 204;
         },
         {
+          
           body: t.Partial(
             t.Object(
               {
@@ -236,37 +212,27 @@ export const postRoutes = (app: Elysia) =>
               },
               {
                 example: {
-                  title: 'Diário de Estudo',
-                  content: `Hoje estudei sobre SQL e como integrar bancos de dados relacionais em aplicações web... Além disso, revisei conceitos de normalização e práticas recomendadas para modelagem de dados. Por fim, pratiquei consultas complexas e manipulação de dados usando comandos SQL. Eu recomendo fortemente a todos que desejam se aprofundar em desenvolvimento web a dedicar um tempo para entender bancos de dados relacionais, pois são fundamentais para a maioria das aplicações modernas.`,
-                  excerpt: 'Como foi o meu estudo de hoje!',
-                  tags: ['JavaScript', 'Estudo', 'SQL'],
+                  title: 'Dear diary: My study day',
+                  content: `Today I studied SQL and how to integrate relational databases into web applications... In addition, I reviewed normalization concepts and best practices for data modeling. Finally, I practiced complex queries and data manipulation using SQL commands. I strongly recommend that anyone looking to deepen their web development skills take the time to understand relational databases, as they are fundamental to most modern applications.`,
+                  excerpt: 'How was my study today!',
+                  tags: ['JavaScript', 'Study', 'SQL'],
                 },
               }
             )
           ),
           params: t.Object({
-            id: t.Number({
-              example: 1,
+            title: t.String({
+              example: 'Dear diary: My study day',
             }),
           }),
           response: {
-            200: t.Object({
-              id: t.Number(),
-              title: t.String(),
-              slug: t.String(),
-              content: t.String(),
-              excerpt: t.String(),
-              authorId: t.Number(),
-              createdAt: t.String(),
-              updatedAt: t.String(),
-              tags: t.Array(t.String()),
-            }),
+            204: t.Void(),
             404: errorSchema,
             500: errorSchema,
           },
           detail: {
-            summary: 'Update a post by ID',
-            description: 'Updates a post in the database by its ID.',
+            summary: 'Update a post by title',
+            description: 'Updates a post in the database by its title.',
             tags: ['Post'],
           },
         }

@@ -26,6 +26,7 @@
     "format": "eslint . --fix && prettier --write ."
   },
   "dependencies": {
+    "@elysiajs/jwt": "^1.4.0",
     "bcryptjs": "^3.0.2",
     "elysia": "^1.4.13",
     "jsonwebtoken": "^9.0.2",

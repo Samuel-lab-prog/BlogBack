@@ -107,7 +107,8 @@ export const userRoutes = (app: Elysia) =>
               token: t.String({
                 description:
                   'JWT token declared with an empty value to be set upon successful login.',
-              }),
+                examples: '',
+              },),
             },
             {
               value: '',
