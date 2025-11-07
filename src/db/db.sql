@@ -4,7 +4,7 @@ CREATE TABLE users (
     last_name VARCHAR(30) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    is_admin BOOLEAN DEFAULT FALSE
+	is_admin BOOLEAN DEFAULT FALSE
 );
 
 
@@ -17,8 +17,8 @@ CREATE TABLE tags (
 CREATE TABLE posts (
     id SERIAL PRIMARY KEY,
     title VARCHAR(150) NOT NULL,
-	excerpt VARCHAR(150) NOT NULL,
-    slug VARCHAR(150) UNIQUE NOT NULL,
+	excerpt TEXT NOT NULL,
+    slug TEXT UNIQUE NOT NULL,
     content TEXT NOT NULL,
     author_id INTEGER NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -32,11 +32,22 @@ CREATE TABLE post_tags (
     tag_id INTEGER REFERENCES tags(id) ON DELETE CASCADE,
     PRIMARY KEY (post_id, tag_id)
 );
+DROP TABLE post_tags;
+DROP TABLE tags;
+DROP TABLE posts;
+DROP TABLE users;
 
-DELETE FROM users
-SELECT * FROM users
-ALTER SEQUENCE users_id_seq RESTART WITH 1;
+DELETE FROM users;
+DELETE FROM posts;
+DELETE FROM post_tags;
+DELETE FROM tags;
+
+SELECT * FROM users;
+SELECT * FROM posts;
+SELECT * FROM tags;
+SELECT * FROM post_tags;
 
 UPDATE users
-set is_admin = true
+SET is_admin = true
 WHERE id = 1
+

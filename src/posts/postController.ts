@@ -39,11 +39,11 @@ export async function registerPost(
 export async function listPosts(
   limit: number,
   tag: string | null
-): Promise<Omit<postType, 'content' | 'authorId' | 'slug' | 'id'>[]> {
+): Promise<Omit<postType, 'content' | 'authorId'>[]> {
   return await selectPosts(limit, tag);
 }
 
-export async function getPostByTitle(title: string): Promise <Omit<postType, 'authorId' | 'id'>> {
+export async function getPostByTitle(title: string): Promise<Omit<postType, 'authorId' | 'id'>> {
   const slug = slugify(title, { lower: true, strict: true });
   const post = await selectPostBySlug(slug);
   if (!post) {
@@ -61,12 +61,13 @@ export async function fetchTags(): Promise<string[]> {
 export async function excludePostByTitle(title: string): Promise<boolean> {
   const slug = slugify(title, { lower: true, strict: true });
   const post = await selectPostBySlug(slug);
-  if (post) {
-    const success = await deletePostBySlug(slug);
-    const tagsDeleted = await deleteOrphanTags();
-    return Boolean(success) && Boolean(tagsDeleted);
+  if (!post) {
+    throw new AppError({
+      statusCode: 404,
+      errorMessages: ['Post not found'],
+    });
   }
-  return false;
+  return await deletePostBySlug(slug);
 }
 
 export async function refreshPostByTitle(

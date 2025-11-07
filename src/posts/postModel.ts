@@ -42,13 +42,13 @@ export async function insertPost(
       throw new AppError({
         statusCode: 409,
         errorMessages: ['Slug already in use'],
-        originalError: error as Error
+        originalError: error as Error,
       });
     }
     throw new AppError({
       statusCode: 500,
       errorMessages: ['Database internal error while creating post.'],
-      originalError: error as Error
+      originalError: error as Error,
     });
   }
 }
@@ -89,17 +89,20 @@ export async function insertTagsIntoPost(postId: number, tagNames: string[]): Pr
     throw new AppError({
       statusCode: 500,
       errorMessages: ['Failed to associate tags to post'],
-      originalError: error as Error
+      originalError: error as Error,
     });
   } finally {
     client.release();
   }
 }
 
-export async function selectPosts(limit: number, tag: string | null): Promise<Omit<postType, 'content' | 'authorId' | 'slug' | 'id'>[]> {
+export async function selectPosts(
+  limit: number,
+  tag: string | null
+): Promise<Omit<postType, 'content' | 'authorId'>[]> {
   const query = `
     SELECT 
-      p.title, 
+      p.title, p.slug, p.id,
       p.created_at, p.updated_at, p.excerpt,
       json_agg(t.name) FILTER (WHERE t.name IS NOT NULL) AS tags
     FROM posts p
@@ -119,7 +122,7 @@ export async function selectPosts(limit: number, tag: string | null): Promise<Om
     throw new AppError({
       statusCode: 500,
       errorMessages: ['Database internal error while listing posts'],
-      originalError: error as Error
+      originalError: error as Error,
     });
   }
 }
@@ -156,7 +159,7 @@ export async function deletePostBySlug(slug: string): Promise<boolean> {
     throw new AppError({
       statusCode: 500,
       errorMessages: ['Failed to delete post'],
-      originalError: error as Error
+      originalError: error as Error,
     });
   }
 }
@@ -172,7 +175,7 @@ export async function deleteOrphanTags(): Promise<boolean> {
     throw new AppError({
       statusCode: 500,
       errorMessages: ['Failed to delete orphan tags'],
-      originalError: error as Error
+      originalError: error as Error,
     });
   }
 }
@@ -188,7 +191,7 @@ export async function deleteTagsFromPost(postId: number): Promise<boolean> {
     throw new AppError({
       statusCode: 500,
       errorMessages: ['Failed to delete tags from post'],
-      originalError: error as Error
+      originalError: error as Error,
     });
   }
 }
@@ -218,7 +221,7 @@ export async function updatePostBySlug(
     throw new AppError({
       statusCode: 500,
       errorMessages: ['Failed to update post'],
-      originalError: error as Error
+      originalError: error as Error,
     });
   }
 }

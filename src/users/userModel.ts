@@ -34,7 +34,8 @@ export async function insertUser(
     }
     throw new AppError({
       statusCode: 500,
-      errorMessages: ['Database internal error while creating user: ' + (error as Error).message],
+      errorMessages: ['Database internal error while creating user'],
+      originalError: error as Error,
     });
   }
 }
@@ -51,9 +52,8 @@ export async function selectUserByEmail(email: string): Promise<UserRow | null> 
   } catch (error: unknown) {
     throw new AppError({
       statusCode: 500,
-      errorMessages: [
-        'Database internal error while getting user by email: ' + (error as Error).message,
-      ],
+      errorMessages: ['Database internal error while fetching user by email'],
+      originalError: error as Error,
     });
   }
 }
@@ -64,17 +64,14 @@ export async function selectUserById(id: number): Promise<UserRow | null> {
     FROM users
     WHERE id = $1
   `;
-
   try {
     const { rows } = await pool.query(query, [id]);
     return rows[0] || null;
   } catch (error: unknown) {
-    console.error(error);
     throw new AppError({
       statusCode: 500,
-      errorMessages: [
-        'Database internal error while fetching user by ID: ' + (error as Error).message,
-      ],
+      errorMessages: ['Database internal error while fetching user by ID'],
+      originalError: error as Error,
     });
   }
 }
@@ -86,15 +83,16 @@ export async function selectIsAdmin(userId: number): Promise<boolean> {
     WHERE id = $1
   `;
   try {
-    const { rows } = await pool.query(query, [userId]);
-    if (!rows[0]) return false;
+    const { rows } = await pool.query<{ is_admin: boolean }>(query, [userId]);
+    if (!rows[0]) {
+      return false;
+    }
     return rows[0].is_admin;
   } catch (error: unknown) {
     throw new AppError({
       statusCode: 500,
-      errorMessages: [
-        'Database internal error while fetching user role: ' + (error as Error).message,
-      ],
+      errorMessages: ['Database internal error while fetching user role'],
+      originalError: error as Error,
     });
   }
 }

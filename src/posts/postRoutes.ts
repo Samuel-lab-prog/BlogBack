@@ -64,22 +64,27 @@ export const postRoutes = (app: Elysia) =>
           set.status = 201;
         },
         {
-          body: t.Object({
-            title: titleField,
-            content: contentField,
-            excerpt: excerptField,
-            tags: tagsField,
-          },{
-            examples: {
-              'application/json': {
-                title: 'How to learn anything fast',
-                content: 'Have you ever wanted to learn something new but felt overwhelmed by the amount of information out there? In this post, I will share some tips and strategies that helped me learn new skills quickly and effectively. First, set clear goals and break down the learning process into manageable chunks. Second, use active learning techniques such as summarizing, questioning, and teaching others. Third, practice regularly and seek feedback to improve your understanding. By following these steps, you can accelerate your learning and achieve your goals faster than you thought possible.',
-                excerpt: 'Learning don\'t have to be hard. Here are some tips to learn anything fast!',
-                authorId: 1,
-                tags: ['JavaScript', 'Programming'],
-              },
+          body: t.Object(
+            {
+              title: titleField,
+              content: contentField,
+              excerpt: excerptField,
+              tags: tagsField,
             },
-          }),
+            {
+              examples: {
+                'application/json': {
+                  title: 'How to learn anything fast',
+                  content:
+                    'Have you ever wanted to learn something new but felt overwhelmed by the amount of information out there? In this post, I will share some tips and strategies that helped me learn new skills quickly and effectively. First, set clear goals and break down the learning process into manageable chunks. Second, use active learning techniques such as summarizing, questioning, and teaching others. Third, practice regularly and seek feedback to improve your understanding. By following these steps, you can accelerate your learning and achieve your goals faster than you thought possible.',
+                  excerpt:
+                    "Learning don't have to be hard. Here are some tips to learn anything fast!",
+                  authorId: 1,
+                  tags: ['JavaScript', 'Programming'],
+                },
+              },
+            }
+          ),
           response: {
             201: t.Void(),
             400: errorSchema,
@@ -104,7 +109,9 @@ export const postRoutes = (app: Elysia) =>
           response: {
             200: t.Array(
               t.Object({
+                id: t.Number(),
                 title: t.String(),
+                slug: t.String(),
                 excerpt: t.String(),
                 createdAt: t.String(),
                 updatedAt: t.String(),
@@ -116,7 +123,7 @@ export const postRoutes = (app: Elysia) =>
           detail: {
             summary: 'List posts',
             description:
-              'Returns a list of posts, including only the title, excerpt, createdAt, updatedAt, and tags for performance reasons. Optionally filtered by tag and limited in number (default limit is 20)',
+              'Returns a list of posts, omitting content and authorId for performance reasons. Optionally filtered by tag and limited in number (default limit is 20)',
             tags: ['Post'],
           },
         }
@@ -142,7 +149,8 @@ export const postRoutes = (app: Elysia) =>
           },
           detail: {
             summary: 'Get a post by title',
-            description: 'Fetch all properties except id and authorId of a single post by its title.',
+            description:
+              'Fetch all properties except id and authorId of a single post by its title.',
             tags: ['Post'],
           },
         }
@@ -197,11 +205,10 @@ export const postRoutes = (app: Elysia) =>
       .patch(
         '/:title',
         async ({ params, body, set }) => {
-        await refreshPostByTitle(params.title, body);
-        set.status = 204;
+          await refreshPostByTitle(params.title, body);
+          set.status = 204;
         },
         {
-          
           body: t.Partial(
             t.Object(
               {

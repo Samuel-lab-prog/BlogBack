@@ -7,25 +7,19 @@ import { type User } from './userTypes';
 export async function registerUser(
   body: Omit<User, 'id' | 'isAdmin'>
 ): Promise<Omit<User, 'password'>> {
-  const { password } = body;
-  const password_hash = await bcrypt.hash(password, Number(process.env.SALT_ROUNDS) || 10);
-  body.password = password_hash;
-  return insertUser(body);
+  const passwordHash = await bcrypt.hash(
+    body.password,
+    Number(process.env.SALT_ROUNDS) || 10
+  );
+  return insertUser({ ...body, password: passwordHash });
 }
 
 export async function loginUser(
   body: Pick<User, 'email' | 'password'>
 ): Promise<{ token: string; user: Pick<User, 'firstName' | 'lastName'> }> {
-  const { email, password } = body;
-  const user = await selectUserByEmail(email);
-  if (!user) {
-    throw new AppError({
-      statusCode: 401,
-      errorMessages: ['Invalid credentials'],
-    });
-  }
-  const valid = await bcrypt.compare(password, user.password_hash);
-  if (!valid) {
+  const user = await selectUserByEmail(body.email);
+
+  if (!user || !(await bcrypt.compare(body.password, user.password_hash))) {
     throw new AppError({
       statusCode: 401,
       errorMessages: ['Invalid credentials'],
@@ -42,12 +36,12 @@ export async function loginUser(
 }
 
 export async function authenticateUser(token: string): Promise<boolean> {
-  const user = verifyToken(token);
-  if (!user) {
+  const payload = verifyToken(token);
+  if (!payload) {
     throw new AppError({
       statusCode: 404,
       errorMessages: ['User not found'],
     });
   }
-  return await selectIsAdmin(user.id);
+  return selectIsAdmin(payload.id);
 }

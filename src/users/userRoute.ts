@@ -5,48 +5,48 @@ import { AppError, errorSchema } from '../utils/AppError';
 const emailField = t.String({
   format: 'email',
   example: 'david@gmail.com',
-  error() {
+  error(){
     throw new AppError({
       statusCode: 400,
-      errorMessages: ['Email must be a valid email address'],
+      errorMessages: ['Invalid email format'],
     });
-  },
+  }
 });
 
 const passwordField = t.String({
   minLength: 6,
   maxLength: 30,
   example: '12345678',
-  error() {
+  error(){
     throw new AppError({
       statusCode: 400,
       errorMessages: ['Password must be between 6 and 30 characters long'],
     });
-  },
+  }
 });
 
 const firstNameField = t.String({
   minLength: 3,
   maxLength: 30,
   example: 'David',
-  error() {
+  error(){
     throw new AppError({
       statusCode: 400,
       errorMessages: ['First name must be between 3 and 30 characters long'],
     });
-  },
+  }
 });
 
 const lastNameField = t.String({
   minLength: 3,
   maxLength: 30,
   example: 'Smith',
-  error() {
+  error(){
     throw new AppError({
       statusCode: 400,
       errorMessages: ['Last name must be between 3 and 30 characters long'],
     });
-  },
+  }
 });
 
 export const userRoutes = (app: Elysia) =>
@@ -69,26 +69,18 @@ export const userRoutes = (app: Elysia) =>
           response: {
             201: t.Object(
               {
-                id: t.Number(),
-                email: t.String(),
                 firstName: t.String(),
                 lastName: t.String(),
               },
-              {
-                description:
-                  "User successfully registered: Returns users's first name and last name.",
-              }
+              { description: 'User successfully registered.' }
             ),
-            400: t.Object({ errorSchema }, { description: 'Bad Request: Invalid request body.' }),
-            409: t.Object({ errorSchema }, { description: 'Conflict: Email already registered.' }),
-            500: t.Object(
-              { errorSchema },
-              { description: 'Internal Server Error: Unexpected error occurred.' }
-            ),
+            400: errorSchema,
+            409: errorSchema,
+            500: errorSchema,
           },
           detail: {
             summary: 'Register a new user',
-            description: 'Creates a new user. Returns the first and last name of the user.',
+            description: 'Creates a new user and returns the first and last name.',
             tags: ['User'],
           },
         }
@@ -96,106 +88,62 @@ export const userRoutes = (app: Elysia) =>
 
       .post(
         '/login',
-        async ({ body, cookie }) => {
+        async ({ body, set }) => {
           const { token, user } = await loginUser(body);
-          cookie.token.value = token;
+          set.headers['Set-Cookie'] = `token=${token}; HttpOnly; Path=/; Max-Age=86400`;
           return user;
         },
         {
-          cookie: t.Cookie(
-            {
-              token: t.String({
-                description:
-                  'JWT token declared with an empty value to be set upon successful login.',
-                examples: '',
-              },),
-            },
-            {
-              value: '',
-            }
-          ),
           body: t.Object({
             email: emailField,
             password: passwordField,
           }),
-
           response: {
             200: t.Object(
               {
                 firstName: t.String(),
                 lastName: t.String(),
               },
-              {
-                description:
-                  'Successful login response: Returns the user first and last name and sets a cookie with the JWT token.',
-              }
+              { description: 'Successful login, JWT set in HTTP-only cookie.' }
             ),
-            400: t.Object(
-              {
-                errorSchema,
-              },
-              { description: 'Bad Request: Invalid request body.' }
-            ),
-            401: t.Object(
-              {
-                errorSchema,
-              },
-              { description: 'Unauthorized: Invalid credentials.' }
-            ),
-            500: t.Object(
-              {
-                errorSchema,
-              },
-              { description: 'Internal Server Error: Unexpected error occurred.' }
-            ),
+            400: errorSchema,
+            401: errorSchema,
+            500: errorSchema,
           },
           detail: {
             summary: 'Login a user',
-            description: 'Authenticates a user and returns a JWT token in an HTTP-only cookie.',
+            description: 'Authenticates user and returns JWT token in cookie.',
             tags: ['User'],
           },
         }
       )
+
       .get(
         '/auth',
-        async ({ cookie: { token }, set }) => {
+        async ({ cookie: { token } }) => {
           const isAdmin = await authenticateUser(token.value);
-          if (!isAdmin) {
-            throw new AppError({
-              statusCode: 403,
-              errorMessages: ['Access denied: Admins only'],
-            });
-          }
-          set.status = 204;
+          return { isAdmin };
         },
         {
           cookie: t.Cookie({
             token: t.String({
-              description: 'JWT token stored in an HTTP-only cookie for authentication.',
-              error() {
-                throw new AppError({
+              description: 'JWT token stored in HTTP-only cookie for authentication.',
+              error: () =>
+                new AppError({
                   statusCode: 400,
                   errorMessages: ['Authentication token is required in cookies'],
-                });
-              },
+                }),
             }),
           }),
           response: {
-            204: t.Void({ description: 'Success: User is an admin.' }),
-            403: t.Object(
-              { errorSchema },
-              { description: 'Forbidden: Access denied for non-admin users.' }
-            ),
-            404: t.Object({ errorSchema }, { description: 'Not Found: User not found.' }),
-            500: t.Object(
-              { errorSchema },
-              { description: 'Internal Server Error: Unexpected error occurred.' }
-            ),
+            204: t.Boolean({ description: 'User is authenticated as admin.' }),
+            403: errorSchema,
+            404: errorSchema,
+            500: errorSchema,
           },
           detail: {
             summary: 'Check admin status',
-            description:
-              'Verifies the JWT token from the cookie and checks if the user is an admin.',
+            description: 'Verifies JWT token and checks if the user is an admin.',
             tags: ['User'],
           },
         }
