@@ -21,4 +21,3 @@ export type postType = {
   updatedAt: string;
   tags: string[];
 };
-

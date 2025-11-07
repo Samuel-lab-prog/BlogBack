@@ -17,7 +17,9 @@ function mapPostRow(row: postRowType): postType {
   };
 }
 
-export async function insertPost(postData: Omit<postType, 'id' | 'createdAt' | 'updatedAt'>): Promise<postType> {
+export async function insertPost(
+  postData: Omit<postType, 'id' | 'createdAt' | 'updatedAt'>
+): Promise<postType> {
   const query = `
     INSERT INTO posts (title, slug, content, author_id, excerpt)
     VALUES ($1, $2, $3, $4, $5)
@@ -55,17 +57,16 @@ export async function insertTagsIntoPost(postId: number, tagNames: string[]): Pr
 
   try {
     await client.query('BEGIN');
-    const uniqueTags = [...new Set(tagNames.map((t) => t.trim().toLowerCase()))];
     await client.query(
       `
       INSERT INTO tags (name)
       SELECT UNNEST($1::text[])
       ON CONFLICT (name) DO NOTHING
       `,
-      [uniqueTags]
+      [tagNames]
     );
     const { rows: tagRows } = await client.query(`SELECT id FROM tags WHERE name = ANY($1)`, [
-      uniqueTags,
+      tagNames,
     ]);
     const tagIds = tagRows.map((t) => t.id);
 
@@ -87,7 +88,7 @@ export async function insertTagsIntoPost(postId: number, tagNames: string[]): Pr
     console.error(error);
     throw new AppError({
       statusCode: 500,
-      errorMessages: ['Failed to associate tags to post'],
+      errorMessages: ['Failed to associate tags to post ' + error],
     });
   } finally {
     client.release();
@@ -151,11 +152,10 @@ export async function selectTags(): Promise<string[]> {
 
 export async function deletePostById(id: number): Promise<number | null> {
   const query = `DELETE FROM posts WHERE id = $1`;
-  try{
+  try {
     const { rowCount } = await pool.query(query, [id]);
     return rowCount;
-  }
-  catch(error){
+  } catch (error) {
     throw new AppError({
       statusCode: 500,
       errorMessages: ['Failed to delete post:' + error],
@@ -170,11 +170,54 @@ export async function deleteOrphanTags(): Promise<number | null> {
     `;
     const { rowCount } = await pool.query(query);
     return rowCount;
-  }
-  catch(error){
+  } catch (error) {
     throw new AppError({
       statusCode: 500,
       errorMessages: ['Failed to delete orphan tags:' + error],
+    });
+  }
+}
+export async function deleteTagsFromPost(postId: number): Promise<number | null> {
+  try {
+    const query = `
+      DELETE FROM post_tags
+      WHERE post_id = $1
+    `;
+    const { rowCount } = await pool.query(query, [postId]);
+    return rowCount;
+  } catch (error) {
+    throw new AppError({
+      statusCode: 500,
+      errorMessages: ['Failed to delete tags from post:' + error],
+    });
+  }
+}
+export async function updatePostById(
+  id: number,
+  newData: Partial<Omit<postType, 'id' | 'createdAt' | 'updatedAt' | 'authorId'>>
+): Promise<postType | null> {
+  const fields = [];
+  const values = [];
+  let index = 1;
+  for (const [key, value] of Object.entries(newData)) {
+    fields.push(`${key} = $${index}`);
+    values.push(value);
+    index++;
+  }
+  fields.push(`updated_at = NOW()`);
+  try {
+    const query = `
+      UPDATE posts
+      SET ${fields.join(', ')}
+      WHERE id = $${index}
+      RETURNING *
+    `;
+    const { rows } = await pool.query(query, [...values, id]);
+    return mapPostRow(rows[0]);
+  } catch (error) {
+    throw new AppError({
+      statusCode: 500,
+      errorMessages: ['Failed to update post:' + error],
     });
   }
 }

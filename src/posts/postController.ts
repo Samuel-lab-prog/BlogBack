@@ -9,10 +9,14 @@ import {
   selectTags,
   deletePostById,
   deleteOrphanTags,
+  updatePostById,
+  deleteTagsFromPost,
 } from './postModel.ts';
 import slugify from 'slugify';
 
-export async function registerPost(body: Omit<postType, 'id' | 'createdAt' | 'updatedAt' | 'slug'>): Promise<postType> {
+export async function registerPost(
+  body: Omit<postType, 'id' | 'createdAt' | 'updatedAt' | 'slug'>
+): Promise<postType> {
   const { title, tags = [] } = body;
 
   const slug = slugify(title, { lower: true, strict: true });
@@ -33,7 +37,10 @@ export async function registerPost(body: Omit<postType, 'id' | 'createdAt' | 'up
   return post;
 }
 
-export async function listPosts(limit: number, tag: string | null): Promise<Omit<postType, 'content' | 'authorId'>[]> {
+export async function listPosts(
+  limit: number,
+  tag: string | null
+): Promise<Omit<postType, 'content' | 'authorId'>[]> {
   return await selectPosts(limit, tag);
 }
 
@@ -55,4 +62,41 @@ export async function excludePostById(id: number): Promise<boolean> {
   const success = await deletePostById(id);
   const tagsDeleted = await deleteOrphanTags();
   return Boolean(success) && Boolean(tagsDeleted);
+}
+
+export async function refreshPost(
+  id: number,
+  newData: Partial<Omit<postType, 'id' | 'createdAt' | 'updatedAt' | 'authorId'>>
+): Promise<postType> {
+  if (Object.entries(newData).length === 0) {
+    throw new AppError({
+      statusCode: 400,
+      errorMessages: ['No data provided for update'],
+    });
+  }
+  if (newData.title) {
+    const newSlug = slugify(newData.title, { lower: true, strict: true });
+    newData = { ...newData, slug: newSlug };
+    const existing = await selectPostBySlugRaw(newSlug);
+    if (existing && existing !== id) {
+      throw new AppError({
+        statusCode: 409,
+        errorMessages: ['Slug already in use'],
+      });
+    }
+  }
+  if (newData.tags) {
+    await deleteTagsFromPost(id);
+    await insertTagsIntoPost(id, newData.tags);
+    delete newData.tags;
+    await deleteOrphanTags();
+  }
+  const updatedPost = await updatePostById(id, newData);
+  if (!updatedPost) {
+    throw new AppError({
+      statusCode: 404,
+      errorMessages: ['Post not found'],
+    });
+  }
+  return updatedPost;
 }

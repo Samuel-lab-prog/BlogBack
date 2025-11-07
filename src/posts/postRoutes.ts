@@ -1,5 +1,12 @@
 import { Elysia, t } from 'elysia';
-import { registerPost, listPosts, getPostBySlug, fetchTags, excludePostById } from './postController.ts';
+import {
+  registerPost,
+  listPosts,
+  getPostBySlug,
+  fetchTags,
+  excludePostById,
+  refreshPost,
+} from './postController.ts';
 import { errorSchema, AppError } from '../utils/AppError.ts';
 
 const titleField = t.String({
@@ -16,7 +23,8 @@ const titleField = t.String({
 
 const contentField = t.String({
   minLength: 100,
-  example: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua...',
+  example:
+    'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua...',
   error() {
     throw new AppError({
       errorMessages: ['Content must have at least 100 characters'],
@@ -45,14 +53,14 @@ const authorIdField = t.Number({
     });
   },
 });
-const tagsField = t.Array(t.String({ example: 'JavaScript' }),{
+const tagsField = t.Array(t.String({ example: 'JavaScript' }), {
   minItems: 1,
   error() {
     throw new AppError({
       errorMessages: ['Tags must be an array of strings with at least one tag'],
       statusCode: 422,
     });
-  }
+  },
 });
 
 export const postRoutes = (app: Elysia) =>
@@ -71,7 +79,7 @@ export const postRoutes = (app: Elysia) =>
             content: contentField,
             excerpt: excerptField,
             authorId: authorIdField,
-            tags: tagsField
+            tags: tagsField,
           }),
           response: {
             201: t.Object({
@@ -92,8 +100,7 @@ export const postRoutes = (app: Elysia) =>
           },
           detail: {
             summary: 'Create a new post',
-            description:
-              'Creates a new post with title, content, excerpt, authorId and tags.',
+            description: 'Creates a new post with title, content, excerpt, authorId and tags.',
             tags: ['Post'],
           },
         }
@@ -107,15 +114,17 @@ export const postRoutes = (app: Elysia) =>
         },
         {
           response: {
-            200: t.Array(t.Object({
-              id: t.Number(),
-              title: t.String(),
-              slug: t.String(),
-              excerpt: t.String(),
-              createdAt: t.String(),
-              updatedAt: t.String(),
-              tags: t.Array(t.String()),
-            })),
+            200: t.Array(
+              t.Object({
+                id: t.Number(),
+                title: t.String(),
+                slug: t.String(),
+                excerpt: t.String(),
+                createdAt: t.String(),
+                updatedAt: t.String(),
+                tags: t.Array(t.String()),
+              })
+            ),
             500: errorSchema,
           },
           detail: {
@@ -210,4 +219,56 @@ export const postRoutes = (app: Elysia) =>
           },
         }
       )
-    );
+      .patch(
+        '/:id',
+        async ({ params, body }) => {
+          const updatedPost = await refreshPost(params.id, body);
+          return updatedPost;
+        },
+        {
+          body: t.Partial(
+            t.Object(
+              {
+                title: titleField,
+                content: contentField,
+                excerpt: excerptField,
+                tags: tagsField,
+              },
+              {
+                example: {
+                  title: 'Diário de Estudo',
+                  content: `Hoje estudei sobre SQL e como integrar bancos de dados relacionais em aplicações web... Além disso, revisei conceitos de normalização e práticas recomendadas para modelagem de dados. Por fim, pratiquei consultas complexas e manipulação de dados usando comandos SQL. Eu recomendo fortemente a todos que desejam se aprofundar em desenvolvimento web a dedicar um tempo para entender bancos de dados relacionais, pois são fundamentais para a maioria das aplicações modernas.`,
+                  excerpt: 'Como foi o meu estudo de hoje!',
+                  tags: ['JavaScript', 'Estudo', 'SQL'],
+                },
+              }
+            )
+          ),
+          params: t.Object({
+            id: t.Number({
+              example: 1,
+            }),
+          }),
+          response: {
+            200: t.Object({
+              id: t.Number(),
+              title: t.String(),
+              slug: t.String(),
+              content: t.String(),
+              excerpt: t.String(),
+              authorId: t.Number(),
+              createdAt: t.String(),
+              updatedAt: t.String(),
+              tags: t.Array(t.String()),
+            }),
+            404: errorSchema,
+            500: errorSchema,
+          },
+          detail: {
+            summary: 'Update a post by ID',
+            description: 'Updates a post in the database by its ID.',
+            tags: ['Post'],
+          },
+        }
+      )
+  );
