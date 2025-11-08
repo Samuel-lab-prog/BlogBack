@@ -35,7 +35,7 @@ export async function loginUser(
   };
 }
 
-export async function authenticateUser(token: string): Promise<boolean> {
+export async function authenticateUser(token: string): Promise<Pick<User, 'isAdmin' | 'id'>> {
   const payload = verifyToken(token);
   if (!payload) {
     throw new AppError({
@@ -43,5 +43,8 @@ export async function authenticateUser(token: string): Promise<boolean> {
       errorMessages: ['User not found'],
     });
   }
-  return selectIsAdmin(payload.id);
+  return {
+    id: payload.id,
+    isAdmin: await selectIsAdmin(payload.id),
+  };
 }

@@ -20,22 +20,22 @@ function mapPostRow(row: postRowType): postType {
 export async function insertPost(
   postData: Omit<postType, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<postType> {
+  const { title, slug, content, authorId, excerpt } = postData;
+
   const query = `
     INSERT INTO posts (title, slug, content, author_id, excerpt)
     VALUES ($1, $2, $3, $4, $5)
     RETURNING *
   `;
-  try {
-    const { title, slug, content, authorId, excerpt } = postData;
-    const { rows } = await pool.query(query, [title, slug, content, authorId, excerpt]);
 
+  try {
+    const { rows } = await pool.query(query, [title, slug, content, authorId, excerpt]);
     if (!rows[0]) {
       throw new AppError({
         statusCode: 500,
         errorMessages: ['Failed to create post.'],
       });
     }
-
     return mapPostRow(rows[0]);
   } catch (error: unknown) {
     if (error instanceof DatabaseError && error.code === '23505') {
@@ -54,9 +54,12 @@ export async function insertPost(
 }
 
 export async function insertTagsIntoPost(postId: number, tagNames: string[]): Promise<number> {
+  if (!tagNames.length) return 0;
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+
     await client.query(
       `
       INSERT INTO tags (name)
@@ -65,12 +68,13 @@ export async function insertTagsIntoPost(postId: number, tagNames: string[]): Pr
       `,
       [tagNames]
     );
+
     const { rows: tagRows } = await client.query(`SELECT id FROM tags WHERE name = ANY($1)`, [
       tagNames,
     ]);
     const tagIds = tagRows.map((t) => t.id);
 
-    if (tagIds.length > 0) {
+    if (tagIds.length) {
       await client.query(
         `
         INSERT INTO post_tags (post_id, tag_id)
@@ -85,7 +89,6 @@ export async function insertTagsIntoPost(postId: number, tagNames: string[]): Pr
     return tagIds.length;
   } catch (error) {
     await client.query('ROLLBACK');
-    console.error(error);
     throw new AppError({
       statusCode: 500,
       errorMessages: ['Failed to associate tags to post'],
@@ -104,20 +107,24 @@ export async function selectPosts(
     SELECT 
       p.title, p.slug, p.id,
       p.created_at, p.updated_at, p.excerpt,
-      json_agg(t.name) FILTER (WHERE t.name IS NOT NULL) AS tags
+      json_agg(t.name) AS tags
     FROM posts p
-    LEFT JOIN post_tags pt ON p.id = pt.post_id
-    LEFT JOIN tags t ON pt.tag_id = t.id
-    ${tag ? 'WHERE t.name = $2' : ''}
+    JOIN post_tags pt ON p.id = pt.post_id
+    JOIN tags t ON pt.tag_id = t.id
+    WHERE ($2::text IS NULL OR EXISTS (
+      SELECT 1
+      FROM post_tags pt2
+      JOIN tags t2 ON pt2.tag_id = t2.id
+      WHERE pt2.post_id = p.id AND t2.name = $2
+    ))
     GROUP BY p.id
     ORDER BY p.created_at DESC
     LIMIT $1
   `;
-
   try {
-    const params = tag ? [limit, tag] : [limit];
+    const params = [limit, tag];
     const { rows } = await pool.query(query, params);
-    return rows.map((row) => mapPostRow(row));
+    return rows.map(mapPostRow);
   } catch (error) {
     throw new AppError({
       statusCode: 500,
@@ -130,8 +137,7 @@ export async function selectPosts(
 export async function selectPostBySlug(slug: string): Promise<postType | null> {
   const query = `
     SELECT 
-      p.title, p.slug, p.content,
-      p.created_at, p.updated_at, p.excerpt,
+      p.id, p.title, p.slug, p.content, p.created_at, p.updated_at, p.excerpt,
       json_agg(t.name) FILTER (WHERE t.name IS NOT NULL) AS tags
     FROM posts p
     LEFT JOIN post_tags pt ON p.id = pt.post_id
@@ -140,6 +146,7 @@ export async function selectPostBySlug(slug: string): Promise<postType | null> {
     GROUP BY p.id
     LIMIT 1
   `;
+
   const { rows } = await pool.query(query, [slug]);
   return rows[0] ? mapPostRow(rows[0]) : null;
 }
@@ -163,6 +170,7 @@ export async function deletePostBySlug(slug: string): Promise<boolean> {
     });
   }
 }
+
 export async function deleteOrphanTags(): Promise<boolean> {
   try {
     const query = `
@@ -179,12 +187,10 @@ export async function deleteOrphanTags(): Promise<boolean> {
     });
   }
 }
+
 export async function deleteTagsFromPost(postId: number): Promise<boolean> {
   try {
-    const query = `
-      DELETE FROM post_tags
-      WHERE post_id = $1
-    `;
+    const query = `DELETE FROM post_tags WHERE post_id = $1`;
     const { rowCount } = await pool.query(query, [postId]);
     return Boolean(rowCount);
   } catch (error) {
@@ -195,26 +201,26 @@ export async function deleteTagsFromPost(postId: number): Promise<boolean> {
     });
   }
 }
+
 export async function updatePostBySlug(
   slug: string,
   newData: Partial<Omit<postType, 'id' | 'createdAt' | 'updatedAt' | 'authorId'>>
 ): Promise<boolean> {
-  const fields = [];
-  const values = [];
-  let index = 1;
-  for (const [key, value] of Object.entries(newData)) {
-    fields.push(`${key} = $${index}`);
-    values.push(value);
-    index++;
-  }
+  const keys = Object.keys(newData);
+  if (!keys.length) return false;
+
+  const fields = keys.map((key, i) => `${key} = $${i + 1}`);
+  const values = Object.values(newData);
   fields.push(`updated_at = NOW()`);
+
+  const query = `
+    UPDATE posts
+    SET ${fields.join(', ')}
+    WHERE slug = $${values.length + 1}
+    RETURNING *
+  `;
+
   try {
-    const query = `
-      UPDATE posts
-      SET ${fields.join(', ')}
-      WHERE slug = $${index}
-      RETURNING *
-    `;
     const { rows } = await pool.query(query, [...values, slug]);
     return Boolean(rows[0]);
   } catch (error) {

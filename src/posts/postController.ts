@@ -14,10 +14,10 @@ import {
 import slugify from 'slugify';
 
 export async function registerPost(
-  body: Omit<postType, 'id' | 'createdAt' | 'updatedAt' | 'slug' | 'authorId'>
+  body: Omit<postType, 'id' | 'createdAt' | 'updatedAt' | 'slug'>
 ): Promise<postType> {
-  const { title, tags = [] } = body;
 
+  const { title, tags = [] } = body;
   const slug = slugify(title, { lower: true, strict: true });
   const existing = await selectPostBySlug(slug);
   if (existing) {
@@ -26,13 +26,15 @@ export async function registerPost(
       errorMessages: ['Slug already in use'],
     });
   }
-  const postData = { ...body, slug, authorId: 1 };
+
+  const postData = { ...body, slug, };
   const post = await insertPost(postData);
 
-  const safeTags = tags.filter((t) => typeof t === 'string' && t.trim() !== '');
-  if (safeTags.length > 0) {
+  const safeTags = tags.filter((t) => typeof t === 'string' && t.trim());
+  if (safeTags.length) {
     await insertTagsIntoPost(post.id, safeTags);
   }
+
   return post;
 }
 
@@ -40,7 +42,7 @@ export async function listPosts(
   limit: number,
   tag: string | null
 ): Promise<Omit<postType, 'content' | 'authorId'>[]> {
-  return await selectPosts(limit, tag);
+  return selectPosts(limit, tag);
 }
 
 export async function getPostByTitle(title: string): Promise<Omit<postType, 'authorId' | 'id'>> {
@@ -54,8 +56,9 @@ export async function getPostByTitle(title: string): Promise<Omit<postType, 'aut
   }
   return post;
 }
+
 export async function fetchTags(): Promise<string[]> {
-  return await selectAllUniqueTags();
+  return selectAllUniqueTags();
 }
 
 export async function excludePostByTitle(title: string): Promise<boolean> {
@@ -67,44 +70,54 @@ export async function excludePostByTitle(title: string): Promise<boolean> {
       errorMessages: ['Post not found'],
     });
   }
-  return await deletePostBySlug(slug);
+  const result = await deletePostBySlug(slug);
+  await deleteOrphanTags();
+  return result;
 }
 
 export async function refreshPostByTitle(
   title: string,
-  newData: Partial<Omit<postType, 'id' | 'createdAt' | 'updatedAt' | 'authorId '>>
+  newData: Partial<Omit<postType, 'id' | 'createdAt' | 'updatedAt' | 'authorId'>>
 ): Promise<boolean> {
+
   const slug = slugify(title, { lower: true, strict: true });
   const post = await selectPostBySlug(slug);
-  if (Object.entries(newData).length === 0) {
-    throw new AppError({
-      statusCode: 400,
-      errorMessages: ['No data provided for update'],
-    });
-  }
   if (!post) {
     throw new AppError({
       statusCode: 404,
       errorMessages: ['Post not found'],
     });
   }
+
+  if (Object.keys(newData).length === 0) {
+    throw new AppError({
+      statusCode: 400,
+      errorMessages: ['No data provided for update'],
+    });
+  }
+
   if (newData.title) {
     const newSlug = slugify(newData.title, { lower: true, strict: true });
-    newData = { ...newData, slug: newSlug };
+    newData.slug = newSlug;
+
     const existing = await selectPostBySlug(newSlug);
-    if (existing && existing !== post) {
+    if (existing && existing.id !== post.id) {
       throw new AppError({
         statusCode: 409,
         errorMessages: ['Slug already in use'],
       });
     }
   }
+
   if (newData.tags) {
+    const safeTags = newData.tags.filter((t) => typeof t === 'string' && t.trim());
     await deleteTagsFromPost(post.id);
-    await insertTagsIntoPost(post.id, newData.tags);
+    if (safeTags.length) {
+      await insertTagsIntoPost(post.id, safeTags);
+    }
     await deleteOrphanTags();
     delete newData.tags;
   }
-  const updatedPost = await updatePostBySlug(post.slug, newData);
-  return Boolean(updatedPost);
+
+  return updatePostBySlug(post.slug, newData);
 }

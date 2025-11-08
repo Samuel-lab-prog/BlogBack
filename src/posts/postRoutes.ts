@@ -8,6 +8,7 @@ import {
   refreshPostByTitle,
 } from './postController.ts';
 import { errorSchema, AppError } from '../utils/AppError.ts';
+import { authenticateUser } from '../users/userController.ts';
 
 const titleField = t.String({
   minLength: 3,
@@ -46,6 +47,7 @@ const excerptField = t.String({
 
 const tagsField = t.Array(t.String({ example: 'JavaScript' }), {
   minItems: 1,
+  uniqueItems: true,
   error() {
     throw new AppError({
       errorMessages: ['Tags must be an array of strings with at least one tag'],
@@ -54,14 +56,26 @@ const tagsField = t.Array(t.String({ example: 'JavaScript' }), {
   },
 });
 
+async function requireAdmin(cookie: { token?: { value: string } }) {
+  const token = cookie.token?.value;
+  if (!token) throw new AppError({ statusCode: 401, errorMessages: ['Authentication required'] });
+  const context = await authenticateUser(token);
+  if (!context.isAdmin) throw new AppError({ statusCode: 403, errorMessages: ['Admin only'] });
+  return context;
+}
+
+
 export const postRoutes = (app: Elysia) =>
   app.group('/posts', (app) =>
     app
       .post(
         '/',
-        async ({ body, set }) => {
-          await registerPost(body);
+        async ({ body, cookie, set }) => {
+          const context = await requireAdmin(cookie);
+          const fullBody = { ...body, authorId: context.id };
+          const post = await registerPost(fullBody);
           set.status = 201;
+          return post;
         },
         {
           body: t.Object(
@@ -76,17 +90,24 @@ export const postRoutes = (app: Elysia) =>
                 'application/json': {
                   title: 'How to learn anything fast',
                   content:
-                    'Have you ever wanted to learn something new but felt overwhelmed by the amount of information out there? In this post, I will share some tips and strategies that helped me learn new skills quickly and effectively. First, set clear goals and break down the learning process into manageable chunks. Second, use active learning techniques such as summarizing, questioning, and teaching others. Third, practice regularly and seek feedback to improve your understanding. By following these steps, you can accelerate your learning and achieve your goals faster than you thought possible.',
-                  excerpt:
-                    "Learning don't have to be hard. Here are some tips to learn anything fast!",
-                  authorId: 1,
+                    'Have you ever wanted to learn something new but felt overwhelmed by the amount of information out there? In this post, I will share some tips and strategies that helped me learn new skills quickly and effectively...',
+                  excerpt: 'Learning made easy: Tips to accelerate your learning',
                   tags: ['JavaScript', 'Programming'],
                 },
               },
             }
           ),
           response: {
-            201: t.Void(),
+            201: t.Object({
+              id: t.Number(),
+              title: t.String(),
+              slug: t.String(),
+              content: t.String(),
+              excerpt: t.String(),
+              tags: t.Array(t.String()),
+              createdAt: t.String(),
+              updatedAt: t.String(),
+            }),
             400: errorSchema,
             422: errorSchema,
             409: errorSchema,
@@ -94,16 +115,19 @@ export const postRoutes = (app: Elysia) =>
           },
           detail: {
             summary: 'Create a new post',
-            description: 'Creates a new post with title, content, excerpt, and tags.',
+            description: 'Creates a new post with title, content, excerpt, and tags. Admin only.',
             tags: ['Post'],
           },
         }
       )
+
       .get(
         '/',
         async ({ query }) => {
-          const { limit = '20', tag = null } = query;
-          return await listPosts(Number(limit), tag);
+          const limit = Number(query.limit ?? 20);
+          if (isNaN(limit) || limit < 1 || limit > 100) throw new AppError({ statusCode: 422, errorMessages: ['Invalid limit'] });
+          const tag = query.tag ?? null;
+          return await listPosts(limit, tag);
         },
         {
           response: {
@@ -118,16 +142,18 @@ export const postRoutes = (app: Elysia) =>
                 tags: t.Array(t.String()),
               })
             ),
+            422: errorSchema,
             500: errorSchema,
           },
           detail: {
             summary: 'List posts',
             description:
-              'Returns a list of posts, omitting content and authorId for performance reasons. Optionally filtered by tag and limited in number (default limit is 20)',
+              'Returns a list of posts, optionally filtered by tag and limited in number (default limit 20).',
             tags: ['Post'],
           },
         }
       )
+
       .get(
         '/:title',
         async ({ params }) => {
@@ -149,12 +175,12 @@ export const postRoutes = (app: Elysia) =>
           },
           detail: {
             summary: 'Get a post by title',
-            description:
-              'Fetch all properties except id and authorId of a single post by its title.',
+            description: 'Fetch a single post by its title.',
             tags: ['Post'],
           },
         }
       )
+
       .get(
         '/tags',
         async () => {
@@ -172,24 +198,16 @@ export const postRoutes = (app: Elysia) =>
           },
         }
       )
+
       .delete(
         '/:title',
-        async ({ params, set }) => {
+        async ({ params, cookie, set }) => {
+          await requireAdmin(cookie);
           await excludePostByTitle(params.title);
           set.status = 204;
         },
         {
-          params: t.Object({
-            title: t.String({
-              example: 'Diário de Estudo',
-              error() {
-                throw new AppError({
-                  errorMessages: ['Invalid post title'],
-                  statusCode: 422,
-                });
-              },
-            }),
-          }),
+          params: t.Object({ title: titleField }),
           response: {
             204: t.Void(),
             404: errorSchema,
@@ -197,49 +215,38 @@ export const postRoutes = (app: Elysia) =>
           },
           detail: {
             summary: 'Delete a post by title',
-            description: 'Removes a post from the database by its title.',
+            description: 'Admin only. Removes a post from the database by its title.',
             tags: ['Post'],
           },
         }
       )
+
       .patch(
         '/:title',
-        async ({ params, body, set }) => {
+        async ({ params, body, cookie, set }) => {
+          await requireAdmin(cookie);
           await refreshPostByTitle(params.title, body);
           set.status = 204;
         },
         {
           body: t.Partial(
-            t.Object(
-              {
-                title: titleField,
-                content: contentField,
-                excerpt: excerptField,
-                tags: tagsField,
-              },
-              {
-                example: {
-                  title: 'Dear diary: My study day',
-                  content: `Today I studied SQL and how to integrate relational databases into web applications... In addition, I reviewed normalization concepts and best practices for data modeling. Finally, I practiced complex queries and data manipulation using SQL commands. I strongly recommend that anyone looking to deepen their web development skills take the time to understand relational databases, as they are fundamental to most modern applications.`,
-                  excerpt: 'How was my study today!',
-                  tags: ['JavaScript', 'Study', 'SQL'],
-                },
-              }
-            )
+            t.Object({
+              title: titleField,
+              content: contentField,
+              excerpt: excerptField,
+              tags: tagsField,
+            })
           ),
-          params: t.Object({
-            title: t.String({
-              example: 'Dear diary: My study day',
-            }),
-          }),
+          params: t.Object({ title: titleField }),
           response: {
             204: t.Void(),
             404: errorSchema,
+            422: errorSchema,
             500: errorSchema,
           },
           detail: {
             summary: 'Update a post by title',
-            description: 'Updates a post in the database by its title.',
+            description: 'Admin only. Updates a post in the database by its title.',
             tags: ['Post'],
           },
         }

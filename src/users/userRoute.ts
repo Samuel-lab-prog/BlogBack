@@ -121,7 +121,8 @@ export const userRoutes = (app: Elysia) =>
       .get(
         '/auth',
         async ({ cookie: { token } }) => {
-          const isAdmin = await authenticateUser(token.value);
+          const context = await authenticateUser(token.value)
+          const isAdmin = context.isAdmin;
           return { isAdmin };
         },
         {
