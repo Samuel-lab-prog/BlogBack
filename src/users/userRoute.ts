@@ -5,48 +5,48 @@ import { AppError, errorSchema } from '../utils/AppError';
 const emailField = t.String({
   format: 'email',
   example: 'david@gmail.com',
-  error(){
+  error() {
     throw new AppError({
       statusCode: 400,
       errorMessages: ['Invalid email format'],
     });
-  }
+  },
 });
 
 const passwordField = t.String({
   minLength: 6,
   maxLength: 30,
   example: '12345678',
-  error(){
+  error() {
     throw new AppError({
       statusCode: 400,
       errorMessages: ['Password must be between 6 and 30 characters long'],
     });
-  }
+  },
 });
 
 const firstNameField = t.String({
   minLength: 3,
   maxLength: 30,
   example: 'David',
-  error(){
+  error() {
     throw new AppError({
       statusCode: 400,
       errorMessages: ['First name must be between 3 and 30 characters long'],
     });
-  }
+  },
 });
 
 const lastNameField = t.String({
   minLength: 3,
   maxLength: 30,
   example: 'Smith',
-  error(){
+  error() {
     throw new AppError({
       statusCode: 400,
       errorMessages: ['Last name must be between 3 and 30 characters long'],
     });
-  }
+  },
 });
 
 export const userRoutes = (app: Elysia) =>
@@ -55,9 +55,8 @@ export const userRoutes = (app: Elysia) =>
       .post(
         '/register',
         async ({ body, set }) => {
-          const user = await registerUser(body);
+          await registerUser(body);
           set.status = 201;
-          return user;
         },
         {
           body: t.Object({
@@ -67,13 +66,7 @@ export const userRoutes = (app: Elysia) =>
             lastName: lastNameField,
           }),
           response: {
-            201: t.Object(
-              {
-                firstName: t.String(),
-                lastName: t.String(),
-              },
-              { description: 'User successfully registered.' }
-            ),
+            201: t.Void({ description: 'User successfully registered.' }),
             400: errorSchema,
             409: errorSchema,
             500: errorSchema,
@@ -121,7 +114,7 @@ export const userRoutes = (app: Elysia) =>
       .get(
         '/auth',
         async ({ cookie: { token } }) => {
-          const context = await authenticateUser(token.value)
+          const context = await authenticateUser(token.value);
           const isAdmin = context.isAdmin;
           return { isAdmin };
         },

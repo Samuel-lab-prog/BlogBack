@@ -16,7 +16,6 @@ import slugify from 'slugify';
 export async function registerPost(
   body: Omit<postType, 'id' | 'createdAt' | 'updatedAt' | 'slug'>
 ): Promise<postType> {
-
   const { title, tags = [] } = body;
   const slug = slugify(title, { lower: true, strict: true });
   const existing = await selectPostBySlug(slug);
@@ -27,10 +26,12 @@ export async function registerPost(
     });
   }
 
-  const postData = { ...body, slug, };
+  const postData = { ...body, slug };
   const post = await insertPost(postData);
 
-  const safeTags = tags.filter((t) => typeof t === 'string' && t.trim());
+  const safeTags = tags
+    .filter((t) => typeof t === 'string' && t.trim())
+    .map((tag) => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase());
   if (safeTags.length) {
     await insertTagsIntoPost(post.id, safeTags);
   }
@@ -79,7 +80,6 @@ export async function refreshPostByTitle(
   title: string,
   newData: Partial<Omit<postType, 'id' | 'createdAt' | 'updatedAt' | 'authorId'>>
 ): Promise<boolean> {
-
   const slug = slugify(title, { lower: true, strict: true });
   const post = await selectPostBySlug(slug);
   if (!post) {

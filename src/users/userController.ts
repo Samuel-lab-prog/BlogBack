@@ -7,10 +7,7 @@ import { type User } from './userTypes';
 export async function registerUser(
   body: Omit<User, 'id' | 'isAdmin'>
 ): Promise<Omit<User, 'password'>> {
-  const passwordHash = await bcrypt.hash(
-    body.password,
-    Number(process.env.SALT_ROUNDS) || 10
-  );
+  const passwordHash = await bcrypt.hash(body.password, Number(process.env.SALT_ROUNDS) || 10);
   return insertUser({ ...body, password: passwordHash });
 }
 

@@ -46,8 +46,3 @@ SELECT * FROM users;
 SELECT * FROM posts;
 SELECT * FROM tags;
 SELECT * FROM post_tags;
-
-UPDATE users
-SET is_admin = true
-WHERE id = 1
-

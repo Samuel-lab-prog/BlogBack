@@ -64,7 +64,6 @@ async function requireAdmin(cookie: { token?: { value: string } }) {
   return context;
 }
 
-
 export const postRoutes = (app: Elysia) =>
   app.group('/posts', (app) =>
     app
@@ -125,7 +124,8 @@ export const postRoutes = (app: Elysia) =>
         '/',
         async ({ query }) => {
           const limit = Number(query.limit ?? 20);
-          if (isNaN(limit) || limit < 1 || limit > 100) throw new AppError({ statusCode: 422, errorMessages: ['Invalid limit'] });
+          if (isNaN(limit) || limit < 1 || limit > 100)
+            throw new AppError({ statusCode: 422, errorMessages: ['Invalid limit'] });
           const tag = query.tag ?? null;
           return await listPosts(limit, tag);
         },
