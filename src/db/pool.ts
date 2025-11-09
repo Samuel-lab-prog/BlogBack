@@ -1,12 +1,16 @@
 import pg from 'pg';
-
 const { Pool } = pg;
+
+const connectionString =
+  process.env.DATABASE_URL ||
+  `postgres://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
+
 const pool = new Pool({
-  user: String(process.env.DB_USER),
-  host: String(process.env.DB_HOST),
-  database: String(process.env.DB_NAME),
-  password: String(process.env.DB_PASSWORD),
-  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 5432,
+  connectionString,
+  ssl:
+    process.env.NODE_ENV === 'production'
+      ? { rejectUnauthorized: false } 
+      : undefined, 
 });
 
 export default pool;
