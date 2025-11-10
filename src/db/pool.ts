@@ -7,10 +7,9 @@ const connectionString =
 
 const pool = new Pool({
   connectionString,
-  ssl:
-    process.env.NODE_ENV === 'production'
-      ? { rejectUnauthorized: false } 
-      : undefined, 
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
 
 export default pool;
