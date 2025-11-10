@@ -20,6 +20,7 @@ new Elysia()
         JSON.stringify({
           errorMessages: error.errorMessages,
           statusCode: set.status,
+          originalError: error.originalError ? error.originalError.message : undefined,
         }),
         {
           status: set.status,
@@ -33,6 +34,7 @@ new Elysia()
       JSON.stringify({
         errorMessages: ['An unexpected error occurred'],
         statusCode: statusCode,
+        originalError: (error as Error).message,
       }),
       {
         status: statusCode,

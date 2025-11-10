@@ -153,6 +153,23 @@ export const postRoutes = (app: Elysia) =>
           },
         }
       )
+      .get(
+        '/tags',
+        async () => {
+          return await fetchTags();
+        },
+        {
+          response: {
+            200: t.Array(t.String()),
+            500: errorSchema,
+          },
+          detail: {
+            summary: 'Get all tags',
+            description: 'Fetch all unique tags from the database.',
+            tags: ['Post'],
+          },
+        }
+      )
 
       .get(
         '/:title',
@@ -181,23 +198,6 @@ export const postRoutes = (app: Elysia) =>
         }
       )
 
-      .get(
-        '/tags',
-        async () => {
-          return await fetchTags();
-        },
-        {
-          response: {
-            200: t.Array(t.String()),
-            500: errorSchema,
-          },
-          detail: {
-            summary: 'Get all tags',
-            description: 'Fetch all unique tags from the database.',
-            tags: ['Post'],
-          },
-        }
-      )
 
       .delete(
         '/:title',
