@@ -21,7 +21,7 @@
     "typescript": "^5"
   },
   "scripts": {
-    "start": "bun run src/server.ts",
+    "start": "npx kill-port 10000 && bun run src/server.ts",
     "dev": "bun run --watch src/server.ts",
     "format": "eslint . --fix && prettier --write ."
   },
