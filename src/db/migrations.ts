@@ -1,11 +1,4 @@
-import pg from 'pg';
-
-const { Pool } = pg;
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL, 
-  ssl: { rejectUnauthorized: false }, 
-});
+import pool from './pool';
 
 const migration = `
 CREATE TABLE IF NOT EXISTS users (
@@ -44,14 +37,11 @@ CREATE TABLE IF NOT EXISTS post_tags (
 export default async function runMigration() {
   const client = await pool.connect();
   try {
-    console.log('🚀 Criando tabelas...');
     await client.query(migration);
-    console.log('✅ Tabelas criadas com sucesso!');
   } catch (err) {
-    console.error('❌ Erro ao criar tabelas:', err);
+    console.error(' Erro ao criar tabelas:', err);
   } finally {
     client.release();
-    await pool.end();
   }
 }
 
