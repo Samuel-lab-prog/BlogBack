@@ -153,8 +153,17 @@ export async function selectPostBySlug(slug: string): Promise<postType | null> {
 
 export async function selectAllUniqueTags(): Promise<string[]> {
   const query = `SELECT DISTINCT name FROM tags ORDER BY name ASC`;
-  const { rows } = await pool.query(query);
-  return rows.map((row) => row.name);
+  try{
+    const { rows } = await pool.query(query);
+    return rows.map((row) => row.name);
+  }
+  catch (error) {
+    throw new AppError({
+      statusCode: 500,
+      errorMessages: ['Failed to fetch tags'],
+      originalError: error as Error,
+    });
+  }
 }
 
 export async function deletePostBySlug(slug: string): Promise<boolean> {
