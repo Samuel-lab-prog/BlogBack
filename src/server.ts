@@ -6,7 +6,7 @@ import { AppError } from './utils/AppError';
 import { userRoutes } from './users/userRoute';
 import { postRoutes } from './posts/postRoutes';
 
-const app = new Elysia()
+new Elysia()
   .use(cors())
   .onError(({ error, set }) => {
     if (error instanceof AppError) {
@@ -50,6 +50,4 @@ const app = new Elysia()
       },
     })
   )
-  .listen({ port: Number(process.env.PORT) || 3000 });
-
-export default app;
+  .listen({ port: Number(process.env.PORT) || 3000, hostname: '0.0.0.0' });
