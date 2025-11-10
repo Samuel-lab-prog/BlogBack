@@ -6,6 +6,10 @@ import { AppError } from './utils/AppError';
 import { userRoutes } from './users/userRoute';
 import { postRoutes } from './posts/postRoutes';
 
+import runMigration from './db/migrations';
+await runMigration();
+
+
 new Elysia()
   .use(cors())
   .onError(({ error, set }) => {
