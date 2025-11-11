@@ -39,13 +39,11 @@ Inside each entity folder, you’ll typically find **five** types of files:
 - **types** — contain TypeScript interfaces and type definitions  
 - **services** — contain the business logic and database queries  
 
----
 ### Database Folder
 This folder contains all the files necessary for configuring the database and representing
 it's tables. As the database continue to increase it's complexity, you may want to create subfolders
 inside of this folder.
 
----
 ### Utilities Folder
 This folder is used for containing utilites files in general, such classes or funcions that you can reuse.
 As this folder continues to grow, you might want to detach some files and organize them inside a new folder
@@ -65,8 +63,8 @@ bun install
 ```
 DB_NAME=yourLocalDbName
 DB_PASSWORD=yourLocalDbPassword
-```
 And so on...
+```
 ### 4.Run the local development server
 ```
 npm run dev
@@ -74,27 +72,27 @@ npm run dev
 ## Good practices and code style
 This project follows several standards and patterns to ensure clean, maintainable, and scalable code — making it easier for anyone to contribute and understand.
 ### Commits patterns
- -1. Use a prefix for every commit. Commomn prefixes include:
+ 1. Use a prefix for every commit. Commomn prefixes include:
    -feat: → for new features
    -fix: → for bug fixes
    -refactor: → for code restructuring without changing functionality
    -docs: → for documentation changes
    -style: → for formatting or code style adjustments
    -test: → for adding or updating tests
- -2. Keep commits focused: Each commit should address only one clear purpose.
+ 2. Keep commits focused: Each commit should address only one clear purpose.
      Avoid large, mixed commits — instead, split them into smaller, well-defined ones.
- -3. Write meaningful commit messages:
+ 3. Write meaningful commit messages:
      Bad: fix stuff
      Good: fix: resolve user authentication token validation issue
 ### Coding patterns
--1. Always use the command ```npm run format``` to format your code before commiting. This ensures consistent code style across the entire project.
--2. Keep logic where it belongs. There shouldn't be a SELECT query in a route file.
--3. Write error proof. Assume that anything that can fail will fail.
+1. Always use the command ```npm run format``` to format your code before commiting. This ensures consistent code style across the entire project.
+2. Keep logic where it belongs. There shouldn't be a SELECT query in a route file.
+3. Write error proof. Assume that anything that can fail will fail.
     Use try/catch blocks when dealing with asynchronous code or external resources (like the database or API calls).
--4. Avoid unecesseary variables. If a value is only used once or is easily readable inline, don’t assign it to a variable.
--5. Keep functions small and focused: Each function should do one thing well.
+4. Avoid unecesseary variables. If a value is only used once or is easily readable inline, don’t assign it to a variable.
+5. Keep functions small and focused: Each function should do one thing well.
     If a function is getting too long or has multiple responsibilities, break it into smaller helper functions.
--6. 
+6. 
 
 
 
