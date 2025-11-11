@@ -1,4 +1,3 @@
----
 #  Blog Application (Backend)
 This repository contains the entire **backend** for the **Blog Application** project.
 ---
