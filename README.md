@@ -1,26 +1,21 @@
 #  Blog Application (Backend)
 
 This repository contains the entire **backend** for the **Blog Application** project.
-
----
-
 ##  Technologies Used
+---
 - **TypeScript** — main programming language  
 - **PostgreSQL** — chosen relational database  
 - **Bun** — runtime environment  
 
----
-
 ##  Main Dependencies
+---
 - **bcrypt** — for password hashing  
 - **jsonwebtoken (JWT)** — for user authentication  
 - **pg** — for interacting with the PostgreSQL database  
 - **elysia** — web framework for Bun  
 - **slugify** — for generating clean slugs from post titles  
-
----
-
 ##  Folder Structure
+---
 - All environment configuration files are in the **root directory**  
 - The main codebase is inside the **`src/`** folder  
 - Inside `src/`, you’ll find three main types of folders:
@@ -49,7 +44,7 @@ This folder is used for containing utilites files in general, such classes or fu
 As this folder continues to grow, you might want to detach some files and organize them inside a new folder
 
 ##  How to Run Locally
-
+---
 ### 1.Clone the repository
 ```
 git clone https://github.com/yourusername/blog-backend.git
@@ -70,6 +65,7 @@ And so on...
 npm run dev
 ```
 ## Good practices and code style
+---
 This project follows several standards and patterns to ensure clean, maintainable, and scalable code — making it easier for anyone to contribute and understand.
 ### Commits patterns
  1. Use a prefix for every commit. Commomn prefixes include:
@@ -87,12 +83,12 @@ This project follows several standards and patterns to ensure clean, maintainabl
 ### Coding patterns
 1. Always use the command ```npm run format``` to format your code before commiting. This ensures consistent code style across the entire project.
 2. Keep logic where it belongs. There shouldn't be a SELECT query in a route file.
-3. Write error proof. Assume that anything that can fail will fail.
-    Use try/catch blocks when dealing with asynchronous code or external resources (like the database or API calls).
+3. Write error proof code. Assume that anything that can fail will fail.
+   Use try/catch blocks when dealing with asynchronous code or external resources (like the database or API calls).
 4. Avoid unecesseary variables. If a value is only used once or is easily readable inline, don’t assign it to a variable.
 5. Keep functions small and focused: Each function should do one thing well.
-    If a function is getting too long or has multiple responsibilities, break it into smaller helper functions.
-6. 
+   If a function is getting too long or has multiple responsibilities, break it into smaller helper functions.
+
 
 
 
