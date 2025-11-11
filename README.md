@@ -1,19 +1,16 @@
 #  Blog Application (Backend)
 
 This repository contains the entire **backend** for the **Blog Application** project.
----
 ##  Technologies Used
 - **TypeScript** — main programming language  
 - **PostgreSQL** — chosen relational database  
 - **Bun** — runtime environment  
----
 ##  Main Dependencies
 - **bcrypt** — for password hashing  
 - **jsonwebtoken (JWT)** — for user authentication  
 - **pg** — for interacting with the PostgreSQL database  
 - **elysia** — web framework for Bun  
 - **slugify** — for generating clean slugs from post titles  
----
 ##  Folder Structure
 - All environment configuration files are in the **root directory**  
 - The main codebase is inside the **`src/`** folder  
@@ -42,7 +39,6 @@ inside of this folder.
 This folder is used for containing utilites files in general, such classes or funcions that you can reuse.
 As this folder continues to grow, you might want to detach some files and organize them inside a new folder
 
----
 ##  How to Run Locally
 ### 1.Clone the repository
 ```
@@ -63,7 +59,6 @@ And so on...
 ```
 npm run dev
 ```
----
 ## Good practices and code style
 This project follows several standards and patterns to ensure clean, maintainable, and scalable code — making it easier for anyone to contribute and understand.
 ### Commits patterns
