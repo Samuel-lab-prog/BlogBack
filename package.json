@@ -23,7 +23,8 @@
   "scripts": {
     "start": "bun run src/server.ts",
     "dev": "bun run --watch src/server.ts",
-    "format": "eslint . --fix && prettier --write ."
+    "format": "eslint . --fix && prettier --write .",
+    "build": "bun build src/server.ts --outdir dist --target bun"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

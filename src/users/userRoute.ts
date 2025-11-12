@@ -83,7 +83,8 @@ export const userRoutes = (app: Elysia) =>
         '/login',
         async ({ body, set }) => {
           const { token, user } = await loginUser(body);
-          set.headers['Set-Cookie'] = `token=${token}; Path=/; HttpOnly; SameSite=None; Secure; Max-Age=3600`;
+          set.headers['Set-Cookie'] =
+            `token=${token}; Path=/; HttpOnly; SameSite=None; Secure; Max-Age=3600`;
           return user;
         },
         {

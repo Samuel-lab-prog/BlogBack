@@ -39,9 +39,8 @@ export default async function runMigration() {
   try {
     await client.query(migration);
   } catch (err) {
-    console.error(' Erro ao criar tabelas:', err);
+    console.error('Error creating tables:', err);
   } finally {
     client.release();
   }
 }
-

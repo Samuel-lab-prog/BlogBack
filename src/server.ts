@@ -9,12 +9,16 @@ import { postRoutes } from './posts/postRoutes';
 import runMigration from './db/migrations';
 await runMigration();
 
-
 new Elysia()
   .use(cors())
   .onError(({ error, set }) => {
     if (error instanceof AppError) {
-      console.error('AppError:', error.errorMessages.join(', '), error.statusCode, error.originalError);
+      console.error(
+        'AppError:',
+        error.errorMessages.join(', '),
+        error.statusCode,
+        error.originalError
+      );
       set.status = error.statusCode;
       return new Response(
         JSON.stringify({

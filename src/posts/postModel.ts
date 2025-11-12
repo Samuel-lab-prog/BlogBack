@@ -21,19 +21,17 @@ export async function insertPost(
   postData: Omit<postType, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<postType> {
   const { title, slug, content, authorId, excerpt } = postData;
-
   const query = `
     INSERT INTO posts (title, slug, content, author_id, excerpt)
     VALUES ($1, $2, $3, $4, $5)
     RETURNING *
   `;
-
   try {
     const { rows } = await pool.query(query, [title, slug, content, authorId, excerpt]);
     if (!rows[0]) {
       throw new AppError({
         statusCode: 500,
-        errorMessages: ['Failed to create post.'],
+        errorMessages: ['Failed to create post: no post returned from database'],
       });
     }
     return mapPostRow(rows[0]);
@@ -42,24 +40,20 @@ export async function insertPost(
       throw new AppError({
         statusCode: 409,
         errorMessages: ['Slug already in use'],
-        originalError: error as Error,
       });
     }
     throw new AppError({
       statusCode: 500,
-      errorMessages: ['Database internal error while creating post.'],
+      errorMessages: ['Failed to create post: an unexpected error occurred'],
       originalError: error as Error,
     });
   }
 }
 
 export async function insertTagsIntoPost(postId: number, tagNames: string[]): Promise<number> {
-  if (!tagNames.length) return 0;
-
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-
     await client.query(
       `
       INSERT INTO tags (name)
@@ -68,12 +62,10 @@ export async function insertTagsIntoPost(postId: number, tagNames: string[]): Pr
       `,
       [tagNames]
     );
-
     const { rows: tagRows } = await client.query(`SELECT id FROM tags WHERE name = ANY($1)`, [
       tagNames,
     ]);
     const tagIds = tagRows.map((t) => t.id);
-
     if (tagIds.length) {
       await client.query(
         `
@@ -84,14 +76,13 @@ export async function insertTagsIntoPost(postId: number, tagNames: string[]): Pr
         [postId, tagIds]
       );
     }
-
     await client.query('COMMIT');
     return tagIds.length;
   } catch (error) {
     await client.query('ROLLBACK');
     throw new AppError({
       statusCode: 500,
-      errorMessages: ['Failed to associate tags to post'],
+      errorMessages: ['Failed to associate tags to post: an unexpected error occurred'],
       originalError: error as Error,
     });
   } finally {
@@ -128,7 +119,7 @@ export async function selectPosts(
   } catch (error) {
     throw new AppError({
       statusCode: 500,
-      errorMessages: ['Database internal error while listing posts'],
+      errorMessages: ['Failed to select posts: an unexpected error occurred'],
       originalError: error as Error,
     });
   }
@@ -146,21 +137,18 @@ export async function selectPostBySlug(slug: string): Promise<postType | null> {
     GROUP BY p.id
     LIMIT 1
   `;
-
   const { rows } = await pool.query(query, [slug]);
   return rows[0] ? mapPostRow(rows[0]) : null;
 }
-
 export async function selectAllUniqueTags(): Promise<string[]> {
   const query = `SELECT DISTINCT name FROM tags ORDER BY name ASC`;
-  try{
+  try {
     const { rows } = await pool.query(query);
     return rows.map((row) => row.name);
-  }
-  catch (error) {
+  } catch (error) {
     throw new AppError({
       statusCode: 500,
-      errorMessages: ['Failed to fetch tags'],
+      errorMessages: ['Failed to select tags: an unexpected error occurred'],
       originalError: error as Error,
     });
   }
@@ -174,7 +162,7 @@ export async function deletePostBySlug(slug: string): Promise<boolean> {
   } catch (error) {
     throw new AppError({
       statusCode: 500,
-      errorMessages: ['Failed to delete post'],
+      errorMessages: ['Failed to delete post: an unexpected error occurred'],
       originalError: error as Error,
     });
   }
@@ -191,7 +179,7 @@ export async function deleteOrphanTags(): Promise<boolean> {
   } catch (error) {
     throw new AppError({
       statusCode: 500,
-      errorMessages: ['Failed to delete orphan tags'],
+      errorMessages: ['Failed to delete orphan tags: an unexpected error occurred'],
       originalError: error as Error,
     });
   }
@@ -205,7 +193,7 @@ export async function deleteTagsFromPost(postId: number): Promise<boolean> {
   } catch (error) {
     throw new AppError({
       statusCode: 500,
-      errorMessages: ['Failed to delete tags from post'],
+      errorMessages: ['Failed to delete tags from post: an unexpected error occurred'],
       originalError: error as Error,
     });
   }
@@ -217,25 +205,21 @@ export async function updatePostBySlug(
 ): Promise<boolean> {
   const keys = Object.keys(newData);
   if (!keys.length) return false;
-
   const fields = keys.map((key, i) => `${key} = $${i + 1}`);
   const values = Object.values(newData);
   fields.push(`updated_at = NOW()`);
-
   const query = `
     UPDATE posts
     SET ${fields.join(', ')}
     WHERE slug = $${values.length + 1}
-    RETURNING *
   `;
-
   try {
     const { rows } = await pool.query(query, [...values, slug]);
     return Boolean(rows[0]);
   } catch (error) {
     throw new AppError({
       statusCode: 500,
-      errorMessages: ['Failed to update post'],
+      errorMessages: ['Failed to update post: an unexpected error occurred'],
       originalError: error as Error,
     });
   }

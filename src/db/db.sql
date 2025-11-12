@@ -32,17 +32,3 @@ CREATE TABLE post_tags (
     tag_id INTEGER REFERENCES tags(id) ON DELETE CASCADE,
     PRIMARY KEY (post_id, tag_id)
 );
-DROP TABLE post_tags;
-DROP TABLE tags;
-DROP TABLE posts;
-DROP TABLE users;
-
-DELETE FROM users;
-DELETE FROM posts;
-DELETE FROM post_tags;
-DELETE FROM tags;
-
-SELECT * FROM users;
-SELECT * FROM posts;
-SELECT * FROM tags;
-SELECT * FROM post_tags;
