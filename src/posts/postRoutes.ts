@@ -74,7 +74,6 @@ export const postRoutes = (app: Elysia) =>
           const fullBody = { ...body, authorId: context.id };
           await registerPost(fullBody);
           set.status = 201;
-          return null;
         },
         {
           body: t.Object(
