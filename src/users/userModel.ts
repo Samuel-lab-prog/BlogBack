@@ -13,14 +13,12 @@ function mapUserRow(row: UserRow): Omit<User, 'password'> {
   };
 }
 
-export async function insertUser(
-  userData: Omit<User, 'id' | 'isAdmin'>
-): Promise<Omit<User, 'password'>> {
+export async function insertUser(userData: Omit<User, 'id' | 'isAdmin'> ): Promise<Pick<User, 'id'>> {
   const { firstName, lastName, email, password } = userData;
   const query = `
     INSERT INTO users (first_name, last_name, email, password_hash)
     VALUES ($1, $2, $3, $4)
-    RETURNING id, email, first_name, last_name, is_admin
+    RETURNING id
   `;
   try {
     const { rows } = await pool.query(query, [firstName, lastName, email, password]);

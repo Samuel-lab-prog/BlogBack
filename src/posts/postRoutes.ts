@@ -21,7 +21,6 @@ const titleField = t.String({
     });
   },
 });
-
 const contentField = t.String({
   minLength: 100,
   example:
@@ -33,7 +32,6 @@ const contentField = t.String({
     });
   },
 });
-
 const excerptField = t.String({
   maxLength: 150,
   example: 'My Chemical Romance is the best band that ever existed. Here is why...',
@@ -44,7 +42,6 @@ const excerptField = t.String({
     });
   },
 });
-
 const tagsField = t.Array(t.String({ example: 'JavaScript' }), {
   minItems: 1,
   uniqueItems: true,
@@ -72,8 +69,9 @@ export const postRoutes = (app: Elysia) =>
         async ({ body, cookie, set }) => {
           const context = await requireAdmin(cookie);
           const fullBody = { ...body, authorId: context.id };
-          await registerPost(fullBody);
+          const post = await registerPost(fullBody);
           set.status = 201;
+          return post;
         },
         {
           body: t.Object(
@@ -96,7 +94,16 @@ export const postRoutes = (app: Elysia) =>
             }
           ),
           response: {
-            201: t.Void(),
+            201: t.Object({
+              id: t.Number(),
+              title: t.String(),
+              slug: t.String(),
+              content: t.String(),
+              excerpt: t.String(),
+              tags: t.Array(t.String()),
+              createdAt: t.String(),
+              updatedAt: t.String(),
+            }),
             400: errorSchema,
             422: errorSchema,
             409: errorSchema,

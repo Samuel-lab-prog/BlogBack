@@ -6,16 +6,15 @@ import { type User } from './userTypes';
 
 export async function registerUser(
   body: Omit<User, 'id' | 'isAdmin'>
-): Promise<Omit<User, 'password'>> {
+): Promise<boolean> {
   const passwordHash = await bcrypt.hash(body.password, Number(process.env.SALT_ROUNDS) || 10);
-  return insertUser({ ...body, password: passwordHash });
+  return Boolean(await insertUser({ ...body, password: passwordHash }));
 }
 
 export async function loginUser(
   body: Pick<User, 'email' | 'password'>
 ): Promise<{ token: string; user: Pick<User, 'firstName' | 'lastName'> }> {
   const user = await selectUserByEmail(body.email);
-
   if (!user || !(await bcrypt.compare(body.password, user.password_hash))) {
     throw new AppError({
       statusCode: 401,
