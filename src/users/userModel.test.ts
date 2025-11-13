@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeAll, afterAll } from "bun:test";
+import { describe, test, expect, beforeAll } from "bun:test";
 import {
   insertUser,
   selectUserByEmail,
@@ -15,7 +15,7 @@ let testUserId: number;
 
 beforeAll(async () => {
   await pool.query(`TRUNCATE TABLE users RESTART IDENTITY CASCADE;`);
-
+  
   const userData = {
     firstName: testFirstName,
     lastName: testLastName,
@@ -26,11 +26,6 @@ beforeAll(async () => {
   const insertedUser = await insertUser(userData);
   testUserId = insertedUser.id;
 });
-
-afterAll(async () => {
-  await pool.end();
-});
-
 
 describe("User model tests", () => {
   test("Insert new user correctly", async () => {
@@ -63,11 +58,11 @@ describe("User model tests", () => {
     const user = await selectUserByEmail(testEmail);
     expect(user).toEqual({
       id: testUserId,
-      first_name: testFirstName,
-      last_name: testLastName,
+      firstName: testFirstName,
+      lastName: testLastName,
       email: testEmail,
-      password_hash: expect.any(String),
-      is_admin: expect.any(Boolean)
+      password: "securepassword",
+      isAdmin: false
     });
   });
 
@@ -80,11 +75,11 @@ describe("User model tests", () => {
     const user = await selectUserById(testUserId);
     expect(user).toEqual({
       id: testUserId,
-      first_name: testFirstName,
-      last_name: testLastName,
+      firstName: testFirstName,
+      lastName: testLastName,
       email: testEmail,
-      password_hash: expect.any(String),
-      is_admin: expect.any(Boolean)
+      password: "securepassword",
+      isAdmin: false
     });
   });
 

@@ -3,13 +3,14 @@ import { DatabaseError } from 'pg';
 import { AppError } from '../utils/AppError.ts';
 import { type UserRow, type User } from './userTypes.ts';
 
-function mapUserRow(row: UserRow): Omit<User, 'password'> {
+function mapUserRow(row: UserRow): User {
   return {
     id: row.id,
     firstName: row.first_name,
     lastName: row.last_name,
     email: row.email,
     isAdmin: row.is_admin,
+    password: row.password_hash,
   };
 }
 
@@ -38,7 +39,7 @@ export async function insertUser(userData: Omit<User, 'id' | 'isAdmin'> ): Promi
   }
 }
 
-export async function selectUserByEmail(email: string): Promise<UserRow | null> {
+export async function selectUserByEmail(email: string): Promise<User | null> {
   const query = `
     SELECT *
     FROM users
@@ -46,7 +47,7 @@ export async function selectUserByEmail(email: string): Promise<UserRow | null> 
   `;
   try {
     const { rows } = await pool.query(query, [email]);
-    return rows[0] || null;
+    return rows[0] ? mapUserRow(rows[0]) : null;
   } catch (error: unknown) {
     throw new AppError({
       statusCode: 500,
@@ -56,7 +57,7 @@ export async function selectUserByEmail(email: string): Promise<UserRow | null> 
   }
 }
 
-export async function selectUserById(id: number): Promise<UserRow | null> {
+export async function selectUserById(id: number): Promise<User | null> {
   const query = `
     SELECT *
     FROM users
@@ -64,7 +65,7 @@ export async function selectUserById(id: number): Promise<UserRow | null> {
   `;
   try {
     const { rows } = await pool.query(query, [id]);
-    return rows[0] || null;
+    return rows[0] ? mapUserRow(rows[0]) : null;
   } catch (error: unknown) {
     throw new AppError({
       statusCode: 500,
@@ -74,7 +75,7 @@ export async function selectUserById(id: number): Promise<UserRow | null> {
   }
 }
 
-export async function selectIsAdmin(userId: number): Promise<boolean> {
+export async function selectIsAdmin(userId: number): Promise<boolean | null> {
   const query = `
     SELECT is_admin
     FROM users
@@ -82,10 +83,7 @@ export async function selectIsAdmin(userId: number): Promise<boolean> {
   `;
   try {
     const { rows } = await pool.query<{ is_admin: boolean }>(query, [userId]);
-    if (!rows[0]) {
-      return false;
-    }
-    return rows[0].is_admin;
+    return rows[0] ? rows[0].is_admin : null;
   } catch (error: unknown) {
     throw new AppError({
       statusCode: 500,
