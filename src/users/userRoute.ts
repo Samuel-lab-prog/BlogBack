@@ -73,12 +73,11 @@ export const userRoutes = (app: Elysia) =>
           },
           detail: {
             summary: 'Register a new user',
-            description: 'Creates a new user and returns the first and last name.',
+            description: 'Creates a new user. Does not return any content.',
             tags: ['User'],
           },
         }
       )
-
       .post(
         '/login',
         async ({ body, set }) => {
@@ -95,10 +94,13 @@ export const userRoutes = (app: Elysia) =>
           response: {
             200: t.Object(
               {
+                id: t.Number(),
+                email: t.String(),
+                isAdmin: t.Boolean(),
                 firstName: t.String(),
                 lastName: t.String(),
               },
-              { description: 'Successful login, JWT set in HTTP-only cookie.' }
+              { description: 'Successful login, JWT set in HTTP-only cookie and user information returned.' }
             ),
             400: errorSchema,
             401: errorSchema,
@@ -111,27 +113,33 @@ export const userRoutes = (app: Elysia) =>
           },
         }
       )
-
       .get(
         '/auth',
-        async ({ cookie: { token } }) => {
+        async ({ cookie: { token }, set }) => {
           const context = await authenticateUser(token.value);
-          const isAdmin = context.isAdmin;
-          return { isAdmin };
+          if (context.isAdmin) {
+            set.status = 204;
+          } else {
+            throw new AppError({
+              statusCode: 403,
+              errorMessages: ['User is not an admin'],
+            });
+          }
         },
         {
           cookie: t.Cookie({
             token: t.String({
               description: 'JWT token stored in HTTP-only cookie for authentication.',
-              error: () =>
-                new AppError({
+              error() {
+                throw new AppError({
                   statusCode: 400,
                   errorMessages: ['Authentication token is required in cookies'],
-                }),
+                });
+              },
             }),
           }),
           response: {
-            204: t.Boolean({ description: 'User is authenticated as admin.' }),
+            204: t.Void({ description: 'User is authenticated and is an admin.' }),
             403: errorSchema,
             404: errorSchema,
             500: errorSchema,
