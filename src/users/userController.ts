@@ -1,21 +1,23 @@
 import { AppError } from '../utils/AppError';
 import { insertUser, selectIsAdmin, selectUserByEmail } from './userModel';
 import { generateToken, verifyToken, type Payload } from '../utils/jwt';
-import bcrypt from 'bcryptjs';
 import { type User } from './userTypes';
 
 export async function registerUser(
   body: Omit<User, 'id' | 'isAdmin'>
-): Promise<boolean> {
-  const passwordHash = await bcrypt.hash(body.password, Number(process.env.SALT_ROUNDS) || 10);
-  return Boolean(await insertUser({ ...body, password: passwordHash }));
+): Promise<Pick<User, 'id'>> {
+  const passwordHash = await Bun.password.hash(body.password, {
+    algorithm: 'bcrypt',
+    cost: process.env.SALT_ROUNDS ? parseInt(process.env.SALT_ROUNDS) : 10,
+  });
+  return await insertUser({ ...body, password: passwordHash });
 }
 
 export async function loginUser(
   body: Pick<User, 'email' | 'password'>
-): Promise<{ token: string; user: Pick<User, 'firstName' | 'lastName'> }> {
+): Promise<{ token: string; user: Omit<User, 'password'> }> {
   const user = await selectUserByEmail(body.email);
-  if (!user || !(await bcrypt.compare(body.password, user.password_hash))) {
+  if (!user || !(await Bun.password.verify(body.password, user.password))) {
     throw new AppError({
       statusCode: 401,
       errorMessages: ['Invalid credentials'],
@@ -25,8 +27,11 @@ export async function loginUser(
   return {
     token,
     user: {
-      firstName: user.first_name,
-      lastName: user.last_name,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      id: user.id,
+      isAdmin: user.isAdmin,
     },
   };
 }

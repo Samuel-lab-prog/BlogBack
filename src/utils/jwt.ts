@@ -12,8 +12,7 @@ export function generateToken(payload: Payload): string {
 
 export function verifyToken(token: string): Payload | null {
   try {
-    const user = jwt.verify(token, JWT_SECRET) as Payload;
-    return user;
+    return jwt.verify(token, JWT_SECRET) as Payload;
   } catch {
     return null;
   }
