@@ -3,28 +3,14 @@ import { AppError } from '../utils/AppError.ts';
 import pool from '../db/pool.ts';
 import type { postRowType, postType } from './postTypes.ts';
 
-function mapPostRow(row: postRowType): postType {
-  return {
-    id: row.id,
-    title: row.title,
-    slug: row.slug,
-    content: row.content,
-    authorId: Number(row.author_id),
-    excerpt: row.excerpt,
-    createdAt: new Date(row.created_at).toISOString(),
-    updatedAt: new Date(row.updated_at ?? row.created_at).toISOString(),
-    tags: Array.isArray(row.tags) ? row.tags.filter((t): t is string => !!t) : [],
-  };
-}
-
 export async function insertPost(
-  postData: Omit<postType, 'id' | 'createdAt' | 'updatedAt'>
-): Promise<postType> {
+  postData: Omit<postType, 'id' | 'createdAt' | 'updatedAt' | 'tags'>
+): Promise<{ id: number }> {
   const { title, slug, content, authorId, excerpt } = postData;
   const query = `
     INSERT INTO posts (title, slug, content, author_id, excerpt)
     VALUES ($1, $2, $3, $4, $5)
-    RETURNING *
+    RETURNING id
   `;
   try {
     const { rows } = await pool.query(query, [title, slug, content, authorId, excerpt]);
@@ -34,7 +20,7 @@ export async function insertPost(
         errorMessages: ['Failed to create post: no post returned from database'],
       });
     }
-    return mapPostRow(rows[0]);
+    return rows[0].id;
   } catch (error: unknown) {
     if (error instanceof DatabaseError && error.code === '23505') {
       throw new AppError({
@@ -93,29 +79,25 @@ export async function insertTagsIntoPost(postId: number, tagNames: string[]): Pr
 export async function selectPosts(
   limit: number,
   tag: string | null
-): Promise<Omit<postType, 'content' | 'authorId'>[]> {
+): Promise<Omit<postType, 'content' | 'authorId' | 'id'>[]> {
   const query = `
     SELECT 
-      p.title, p.slug, p.id,
-      p.created_at, p.updated_at, p.excerpt,
+      p.title as, p.slug,
+      p.created_at AS createdAt,
+      p.updated_at AS updatedAt, p.excerpt,
       json_agg(t.name) AS tags
     FROM posts p
     JOIN post_tags pt ON p.id = pt.post_id
     JOIN tags t ON pt.tag_id = t.id
-    WHERE ($2::text IS NULL OR EXISTS (
-      SELECT 1
-      FROM post_tags pt2
-      JOIN tags t2 ON pt2.tag_id = t2.id
-      WHERE pt2.post_id = p.id AND t2.name = $2
-    ))
+    ${tag ? 'WHERE t.name = $2' : ''}
     GROUP BY p.id
     ORDER BY p.created_at DESC
     LIMIT $1
   `;
   try {
-    const params = [limit, tag];
+    const params = tag ? [limit, tag] : [limit];
     const { rows } = await pool.query(query, params);
-    return rows.map(mapPostRow);
+    return rows;
   } catch (error) {
     throw new AppError({
       statusCode: 500,
@@ -128,7 +110,7 @@ export async function selectPosts(
 export async function selectPostBySlug(slug: string): Promise<postType | null> {
   const query = `
     SELECT 
-      p.id, p.title, p.slug, p.content, p.created_at, p.updated_at, p.excerpt,
+      p.id, p.title, p.author_id, p.slug, p.content, p.created_at, p.updated_at, p.excerpt,
       json_agg(t.name) FILTER (WHERE t.name IS NOT NULL) AS tags
     FROM posts p
     LEFT JOIN post_tags pt ON p.id = pt.post_id

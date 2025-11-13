@@ -15,7 +15,7 @@ import slugify from 'slugify';
 
 export async function registerPost(
   body: Omit<postType, 'id' | 'createdAt' | 'updatedAt' | 'slug'>
-): Promise<postType> {
+): Promise<Pick<postType, 'id'>> {
   const { title, tags = [] } = body;
   const slug = slugify(title, { lower: true, strict: true });
   const existing = await selectPostBySlug(slug);
