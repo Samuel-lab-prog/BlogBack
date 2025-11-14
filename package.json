@@ -28,7 +28,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
     "elysia": "^1.4.13",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.16.3",
