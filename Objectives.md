@@ -41,19 +41,19 @@ Este checklist acompanha a evolução do projeto rumo a um nível profissional, 
 - [ ] Helmet + rate limiting
 - [ ] Sanitização de dados (xss-clean, etc.)
 - [ ] Logs de requisição (status, tempo, IP)
-- [ ] .env.dev, .env.test, .env.prod separados
+- [x] .env.dev, .env.test, .env.prod separados
 
 ### **Documentação**
 
 - [x] Swagger (OpenAPI) para todos os endpoints
-- [ ] README completo com instruções
+- [x] README completo com instruções
 - [ ] Coleção do Postman exportada
 - [ ] Diagrama da arquitetura
 
 ### **Banco de Dados**
 
 - [x] Tabelas normalizadas
-- [ ] Scripts SQL versionados
+- [x] Scripts SQL versionados
 - [x] Migrações (manual ou via Prisma/Drizzle)
 - [ ] Backup automático
 - [ ] Script de reset de DB para testes
@@ -68,14 +68,14 @@ Este checklist acompanha a evolução do projeto rumo a um nível profissional, 
 
 - [ ] Dockerfile para backend
 - [ ] docker-compose para backend + banco
-- [ ] CI/CD com testes + deploy automático
+- [x] CI/CD com testes + deploy automático
 - [ ] Health check configurado
 - [ ] Logs centralizados (Logtail / Papertrail)
 
 ### **Frontend**
 
 - [x] Páginas de erro (404, 500)
-- [] Tratamento de erros do backend
+- [x] Tratamento de erros do backend
 - [x] Painel administrativo funcional
 - [ ] Tema dark/light
 - [ ] UX refinada (feedbacks, toasts, loaders)
