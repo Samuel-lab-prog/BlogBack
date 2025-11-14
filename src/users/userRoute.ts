@@ -100,7 +100,10 @@ export const userRoutes = (app: Elysia) =>
                 firstName: t.String(),
                 lastName: t.String(),
               },
-              { description: 'Successful login, JWT set in HTTP-only cookie and user information returned.' }
+              {
+                description:
+                  'Successful login, JWT set in HTTP-only cookie and user information returned.',
+              }
             ),
             400: errorSchema,
             401: errorSchema,

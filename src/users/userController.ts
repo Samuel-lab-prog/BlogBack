@@ -4,10 +4,11 @@ import { generateToken, verifyToken, type Payload } from '../utils/jwt';
 import { type User } from './userTypes';
 import bycrypt from 'bcryptjs';
 
-export async function registerUser(
-  body: Omit<User, 'id' | 'isAdmin'>
-): Promise<Pick<User, 'id'>> {
-  const passwordHash = await bycrypt.hash(body.password, process.env.SALT_ROUNDS ? parseInt(process.env.SALT_ROUNDS) : 10);
+export async function registerUser(body: Omit<User, 'id' | 'isAdmin'>): Promise<Pick<User, 'id'>> {
+  const passwordHash = await bycrypt.hash(
+    body.password,
+    process.env.SALT_ROUNDS ? parseInt(process.env.SALT_ROUNDS) : 10
+  );
   return await insertUser({ ...body, password: passwordHash });
 }
 
@@ -43,7 +44,7 @@ export async function authenticateUser(token: string): Promise<Pick<User, 'isAdm
     });
   }
   const isAdmin = await selectIsAdmin(payload.id);
-  if(isAdmin === null) {
+  if (isAdmin === null) {
     throw new AppError({
       statusCode: 404,
       errorMessages: ['User not found'],

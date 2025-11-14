@@ -3,7 +3,6 @@ import { AppError } from '../utils/AppError.ts';
 import pool from '../db/pool.ts';
 import type { postType } from './postTypes.ts';
 
-
 export async function insertPost(
   postData: Omit<postType, 'id' | 'createdAt' | 'updatedAt' | 'tags'>
 ): Promise<{ id: number }> {
@@ -41,7 +40,7 @@ export async function insertTagsIntoPost(postId: number, tagNames: string[]): Pr
   const client = await pool.connect();
   tagNames = [...new Set(tagNames)];
   try {
-    await client.query("BEGIN");
+    await client.query('BEGIN');
     await client.query(
       `
       INSERT INTO tags (name)
@@ -70,20 +69,19 @@ export async function insertTagsIntoPost(postId: number, tagNames: string[]): Pr
         [postId, tagIds]
       );
     }
-    await client.query("COMMIT");
+    await client.query('COMMIT');
     return tagIds.length;
   } catch (error) {
-    await client.query("ROLLBACK");
+    await client.query('ROLLBACK');
     throw new AppError({
       statusCode: 500,
-      errorMessages: ["Failed to associate tags to post: an unexpected error occurred"],
+      errorMessages: ['Failed to associate tags to post: an unexpected error occurred'],
       originalError: error as Error,
     });
   } finally {
     client.release();
   }
 }
-
 
 export async function selectPosts(
   limit: number,

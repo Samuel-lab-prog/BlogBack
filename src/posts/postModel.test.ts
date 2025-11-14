@@ -1,5 +1,5 @@
-import { describe, test, expect, beforeAll } from "bun:test";
-import pool from "../db/pool";
+import { describe, test, expect, beforeAll } from 'bun:test';
+import pool from '../db/pool';
 import {
   insertPost,
   insertTagsIntoPost,
@@ -10,22 +10,22 @@ import {
   deleteOrphanTags,
   deleteTagsFromPost,
   updatePostBySlug,
-} from "./postModel";
-import { insertUser } from "../users/userModel";
+} from './postModel';
+import { insertUser } from '../users/userModel';
 
 const testData = {
   post: {
-    title: "Test Post",
-    slug: "test-post",
-    excerpt: "This is a test excerpt.",
-    content: "This is the content of the test post.",
+    title: 'Test Post',
+    slug: 'test-post',
+    excerpt: 'This is a test excerpt.',
+    content: 'This is the content of the test post.',
   },
-  tags: ["TestTag", "SampleTag"],
+  tags: ['TestTag', 'SampleTag'],
   user: {
-    firstName: "Test",
-    lastName: "User",
-    email: "test@example.com",
-    password: "hashedpwd",
+    firstName: 'Test',
+    lastName: 'User',
+    email: 'test@example.com',
+    password: 'hashedpwd',
   },
 };
 
@@ -52,59 +52,59 @@ beforeAll(async () => {
   await insertTagsIntoPost(testPostId, testData.tags);
 });
 
-describe("Post model tests", () => {
-  test("Insert new post correctly", async () => {
+describe('Post model tests', () => {
+  test('Insert new post correctly', async () => {
     const inserted = await insertPost({
-      title: "Another Post",
-      slug: "another-post",
-      content: "Some content",
+      title: 'Another Post',
+      slug: 'another-post',
+      content: 'Some content',
       authorId: testUserId,
-      excerpt: "Excerpt example",
+      excerpt: 'Excerpt example',
     });
 
     expect(inserted).toBeGreaterThan(0);
   });
 
-  test("Insert post with existing slug should throw conflict error", async () => {
+  test('Insert post with existing slug should throw conflict error', async () => {
     expect(
       insertPost({
-        title: "Duplicate",
+        title: 'Duplicate',
         slug: testData.post.slug,
-        content: "Duplicate content",
+        content: 'Duplicate content',
         authorId: testUserId,
-        excerpt: "Duplicate",
+        excerpt: 'Duplicate',
       })
     ).rejects.toMatchObject({
       statusCode: 409,
-      errorMessages: ["Slug already in use"],
+      errorMessages: ['Slug already in use'],
     });
   });
 
-  test("Insert tags into post", async () => {
-    const count = await insertTagsIntoPost(testPostId, ["ExtraTag"]);
+  test('Insert tags into post', async () => {
+    const count = await insertTagsIntoPost(testPostId, ['ExtraTag']);
     expect(count).toBeGreaterThan(0);
   });
 
-  test("Select posts without tag filter", async () => {
+  test('Select posts without tag filter', async () => {
     const posts = await selectPosts(10, null);
 
     expect(Array.isArray(posts)).toBe(true);
     expect(posts.length).toBeGreaterThan(0);
-    expect(posts[0]).toHaveProperty("title");
-    expect(posts[0]).toHaveProperty("slug");
-    expect(posts[0]).toHaveProperty("tags");
+    expect(posts[0]).toHaveProperty('title');
+    expect(posts[0]).toHaveProperty('slug');
+    expect(posts[0]).toHaveProperty('tags');
   });
 
-  test("Select posts with tag filter", async () => {
-    const posts = await selectPosts(10, "SampleTag");
+  test('Select posts with tag filter', async () => {
+    const posts = await selectPosts(10, 'SampleTag');
 
     expect(Array.isArray(posts)).toBe(true);
     if (posts.length) {
-      expect(posts[0]?.tags).toContain("SampleTag");
+      expect(posts[0]?.tags).toContain('SampleTag');
     }
   });
 
-  test("Select post by slug", async () => {
+  test('Select post by slug', async () => {
     const post = await selectPostBySlug(testData.post.slug);
     expect(post).not.toBeNull();
     expect(post).toMatchObject({
@@ -114,44 +114,44 @@ describe("Post model tests", () => {
     });
   });
 
-  test("Select post by non-existing slug returns null", async () => {
-    const post = await selectPostBySlug("does-not-exist");
+  test('Select post by non-existing slug returns null', async () => {
+    const post = await selectPostBySlug('does-not-exist');
     expect(post).toBeNull();
   });
 
-  test("Select all unique tags", async () => {
+  test('Select all unique tags', async () => {
     const tags = await selectAllUniqueTags();
     expect(Array.isArray(tags)).toBe(true);
     expect(tags.length).toBeGreaterThan(0);
-    expect(tags).toContain("TestTag");
+    expect(tags).toContain('TestTag');
   });
 
-  test("Update post by slug returns updated id", async () => {
+  test('Update post by slug returns updated id', async () => {
     const updatedId = await updatePostBySlug(testData.post.slug, {
-      title: "Updated Title",
+      title: 'Updated Title',
     });
 
     expect(updatedId).toBe(testPostId);
   });
 
-  test("Delete tags from post returns number of rows deleted", async () => {
+  test('Delete tags from post returns number of rows deleted', async () => {
     const deleted = await deleteTagsFromPost(testPostId);
-    expect(typeof deleted).toBe("number");
+    expect(typeof deleted).toBe('number');
     expect(deleted).toBeGreaterThanOrEqual(2);
   });
 
-  test("Delete orphan tags returns count of deleted tags", async () => {
+  test('Delete orphan tags returns count of deleted tags', async () => {
     const deleted = await deleteOrphanTags();
-    expect(typeof deleted).toBe("number");
+    expect(typeof deleted).toBe('number');
   });
 
-  test("Delete post by slug returns id", async () => {
+  test('Delete post by slug returns id', async () => {
     const deletedId = await deletePostBySlug(testData.post.slug);
     expect(deletedId).toBe(testPostId);
   });
 
-  test("Deleting non-existing post returns 0", async () => {
-    const deleted = await deletePostBySlug("does-not-exist");
+  test('Deleting non-existing post returns 0', async () => {
+    const deleted = await deletePostBySlug('does-not-exist');
     expect(deleted).toBe(0);
   });
 });

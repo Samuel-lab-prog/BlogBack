@@ -52,16 +52,13 @@ const tagsField = t.Array(t.String(), {
   },
 });
 
-
 async function requireAdmin(cookie: { token?: { value: string } }) {
   const token = cookie.token?.value;
-  if (!token)
-    throw new AppError({ statusCode: 401, errorMessages: ['Authentication required'] });
+  if (!token) throw new AppError({ statusCode: 401, errorMessages: ['Authentication required'] });
 
   const context = await authenticateUser(token);
 
-  if (!context.isAdmin)
-    throw new AppError({ statusCode: 403, errorMessages: ['Admin only'] });
+  if (!context.isAdmin) throw new AppError({ statusCode: 403, errorMessages: ['Admin only'] });
 
   return context;
 }
@@ -145,47 +142,39 @@ export const postRoutes = (app: Elysia) =>
         }
       )
 
-      .get(
-        '/tags',
-        async () => await fetchTags(),
-        {
-          response: {
-            200: t.Array(t.String()),
-            500: errorSchema,
-          },
-          detail: {
-            summary: 'Fetch tags',
-            tags: ['Post'],
-          },
-        }
-      )
+      .get('/tags', async () => await fetchTags(), {
+        response: {
+          200: t.Array(t.String()),
+          500: errorSchema,
+        },
+        detail: {
+          summary: 'Fetch tags',
+          tags: ['Post'],
+        },
+      })
 
-      .get(
-        '/:title',
-        async ({ params }) => await getPostByTitle(params.title),
-        {
-          params: t.Object({
+      .get('/:title', async ({ params }) => await getPostByTitle(params.title), {
+        params: t.Object({
+          title: t.String(),
+        }),
+        response: {
+          200: t.Object({
             title: t.String(),
+            slug: t.String(),
+            content: t.String(),
+            excerpt: t.String(),
+            createdAt: t.String(),
+            updatedAt: t.String(),
+            tags: t.Array(t.String()),
           }),
-          response: {
-            200: t.Object({
-              title: t.String(),
-              slug: t.String(),
-              content: t.String(),
-              excerpt: t.String(),
-              createdAt: t.String(),
-              updatedAt: t.String(),
-              tags: t.Array(t.String()),
-            }),
-            404: errorSchema,
-            500: errorSchema,
-          },
-          detail: {
-            summary: 'Get post by title',
-            tags: ['Post'],
-          },
-        }
-      )
+          404: errorSchema,
+          500: errorSchema,
+        },
+        detail: {
+          summary: 'Get post by title',
+          tags: ['Post'],
+        },
+      })
 
       .delete(
         '/:title',

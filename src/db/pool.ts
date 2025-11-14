@@ -1,14 +1,14 @@
-import pg from "pg";
+import pg from 'pg';
 
 const { Pool } = pg;
-const env = process.env.NODE_ENV || "development";
+const env = process.env.NODE_ENV || 'development';
 let connectionString: string;
 
 switch (env) {
-  case "production":
+  case 'production':
     connectionString = process.env.PROD_DATABASE_URL!;
     break;
-  case "test":
+  case 'test':
     connectionString = process.env.TEST_DATABASE_URL!;
     break;
   default:
@@ -20,5 +20,8 @@ if (!connectionString) {
   throw new Error(` DATABASE_URL is not defined for environment: ${env}`);
 }
 
-export const pool = new Pool({ connectionString, ssl: env === "production" ? { rejectUnauthorized: false } : false });
+export const pool = new Pool({
+  connectionString,
+  ssl: env === 'production' ? { rejectUnauthorized: false } : false,
+});
 export default pool;

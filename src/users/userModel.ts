@@ -14,7 +14,9 @@ function mapUserRow(row: UserRow): User {
   };
 }
 
-export async function insertUser(userData: Omit<User, 'id' | 'isAdmin'> ): Promise<Pick<User, 'id'>> {
+export async function insertUser(
+  userData: Omit<User, 'id' | 'isAdmin'>
+): Promise<Pick<User, 'id'>> {
   const { firstName, lastName, email, password } = userData;
   const query = `
     INSERT INTO users (first_name, last_name, email, password_hash)
