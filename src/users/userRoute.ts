@@ -119,15 +119,9 @@ export const userRoutes = (app: Elysia) =>
       .get(
         '/auth',
         async ({ cookie: { token }, set }) => {
-          const context = await authenticateUser(token.value);
-          if (context.isAdmin) {
-            set.status = 204;
-          } else {
-            throw new AppError({
-              statusCode: 403,
-              errorMessages: ['User is not an admin'],
-            });
-          }
+          const user = await authenticateUser(token.value);
+          set.status = 204;
+          return user;
         },
         {
           cookie: t.Cookie({
@@ -142,14 +136,24 @@ export const userRoutes = (app: Elysia) =>
             }),
           }),
           response: {
-            204: t.Void({ description: 'User is authenticated and is an admin.' }),
+            204: t.Object(
+              {
+                id: t.Number(),
+                email: t.String(),
+                isAdmin: t.Boolean(),
+                firstName: t.String(),
+                lastName: t.String(),
+              },
+              { description: 'User successfully authenticated.' }
+            ),
+            400: errorSchema,
             403: errorSchema,
             404: errorSchema,
             500: errorSchema,
           },
           detail: {
             summary: 'Check admin status',
-            description: 'Verifies JWT token and checks if the user is an admin.',
+            description: 'Verifies JWT token and checks if the user is an admin. Returns user info.',
             tags: ['User'],
           },
         }

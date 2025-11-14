@@ -117,7 +117,7 @@ export const postRoutes = (app: Elysia) =>
         },
         {
           query: t.Object({
-            limit: t.Optional(t.Numeric()),
+            limit: t.Optional(t.String()),
             tag: t.Optional(t.String()),
           }),
           response: {

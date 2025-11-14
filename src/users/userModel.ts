@@ -13,7 +13,6 @@ function mapUserRow(row: UserRow): User {
     password: row.password_hash,
   };
 }
-
 export async function insertUser(
   userData: Omit<User, 'id' | 'isAdmin'>
 ): Promise<Pick<User, 'id'>> {
@@ -24,13 +23,19 @@ export async function insertUser(
     RETURNING id
   `;
   try {
-    const { rows } = await pool.query(query, [firstName, lastName, email, password]);
-    return mapUserRow(rows[0]);
+    const { rows } = await pool.query(query, [
+      firstName,
+      lastName,
+      email,
+      password,
+    ]);
+    return { id: rows[0].id };
   } catch (error: unknown) {
     if (error instanceof DatabaseError && error.code === '23505') {
       throw new AppError({
         statusCode: 409,
         errorMessages: ['Email already in use'],
+        originalError: error,
       });
     }
     throw new AppError({
@@ -40,16 +45,21 @@ export async function insertUser(
     });
   }
 }
-
-export async function selectUserByEmail(email: string): Promise<User | null> {
+export async function selectUserByEmail(email: string): Promise<User> {
   const query = `
     SELECT *
     FROM users
     WHERE email = $1
   `;
   try {
-    const { rows } = await pool.query(query, [email]);
-    return rows[0] ? mapUserRow(rows[0]) : null;
+    const { rows } = await pool.query<UserRow>(query, [email]);
+    if (!rows[0]){
+      throw new AppError({
+        statusCode: 404,
+        errorMessages: ['User not found'],
+      });
+    }
+    return mapUserRow(rows[0]);
   } catch (error: unknown) {
     throw new AppError({
       statusCode: 500,
@@ -59,15 +69,21 @@ export async function selectUserByEmail(email: string): Promise<User | null> {
   }
 }
 
-export async function selectUserById(id: number): Promise<User | null> {
+export async function selectUserById(id: number): Promise<User> {
   const query = `
     SELECT *
     FROM users
     WHERE id = $1
   `;
   try {
-    const { rows } = await pool.query(query, [id]);
-    return rows[0] ? mapUserRow(rows[0]) : null;
+    const { rows } = await pool.query<UserRow>(query, [id]);
+    if (!rows[0]){
+      throw new AppError({
+        statusCode: 404,
+        errorMessages: ['User not found'],
+      });
+    }
+    return mapUserRow(rows[0]);
   } catch (error: unknown) {
     throw new AppError({
       statusCode: 500,
@@ -77,15 +93,22 @@ export async function selectUserById(id: number): Promise<User | null> {
   }
 }
 
-export async function selectIsAdmin(userId: number): Promise<boolean | null> {
+export async function selectIsAdmin(userId: number): Promise<boolean> {
   const query = `
     SELECT is_admin
     FROM users
     WHERE id = $1
   `;
+
   try {
-    const { rows } = await pool.query<{ is_admin: boolean }>(query, [userId]);
-    return rows[0] ? rows[0].is_admin : null;
+    const { rows } = await pool.query(query, [userId]);
+    if (!rows[0]){
+      throw new AppError({
+        statusCode: 404,
+        errorMessages: ['User not found'],
+      });
+    }
+    return rows[0].is_admin;
   } catch (error: unknown) {
     throw new AppError({
       statusCode: 500,

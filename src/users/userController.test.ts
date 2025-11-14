@@ -64,6 +64,9 @@ describe('User controller test', () => {
     expect(authResult).toEqual({
       id: testUserId,
       isAdmin: false,
+      email: testEmail,
+      firstName: testFirstName,
+      lastName: testLastName,
     });
   });
 

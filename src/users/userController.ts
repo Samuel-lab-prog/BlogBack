@@ -1,5 +1,5 @@
 import { AppError } from '../utils/AppError';
-import { insertUser, selectIsAdmin, selectUserByEmail } from './userModel';
+import { insertUser, selectIsAdmin, selectUserByEmail, selectUserById } from './userModel';
 import { generateToken, verifyToken, type Payload } from '../utils/jwt';
 import { type User } from './userTypes';
 import bycrypt from 'bcryptjs';
@@ -35,7 +35,7 @@ export async function loginUser(
   };
 }
 
-export async function authenticateUser(token: string): Promise<Pick<User, 'isAdmin' | 'id'>> {
+export async function authenticateUser(token: string): Promise<Omit<User, 'password'>> {
   const payload = verifyToken(token);
   if (!payload) {
     throw new AppError({
@@ -43,15 +43,13 @@ export async function authenticateUser(token: string): Promise<Pick<User, 'isAdm
       errorMessages: ['User not found'],
     });
   }
-  const isAdmin = await selectIsAdmin(payload.id);
-  if (isAdmin === null) {
+  const user = await selectUserById(payload.id);
+  if (!user) {
     throw new AppError({
       statusCode: 404,
       errorMessages: ['User not found'],
     });
   }
-  return {
-    id: payload.id,
-    isAdmin: isAdmin,
-  };
+const { password, ...userWithoutPassword } = user;
+return userWithoutPassword;
 }
