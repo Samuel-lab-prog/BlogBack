@@ -3,6 +3,8 @@ import { DatabaseError } from 'pg';
 import { AppError } from '../utils/AppError.ts';
 import { type UserRow, type User } from './userTypes.ts';
 
+const isProd = process.env.NODE_ENV === 'production';
+
 function mapUserRow(row: UserRow): User {
   return {
     id: row.id,
@@ -45,29 +47,37 @@ export async function insertUser(
     });
   }
 }
-export async function selectUserByEmail(email: string): Promise<User> {
+export async function selectUserByEmail(email: string): Promise<User | null> {
   const query = `
-    SELECT *
+    SELECT id, email, name, password, created_at, updated_at
     FROM users
     WHERE email = $1
+    LIMIT 2
   `;
   try {
     const { rows } = await pool.query<UserRow>(query, [email]);
-    if (!rows[0]){
+    if (!rows[0]) {
+      return null;
+    }
+    if (rows.length > 1) {
       throw new AppError({
-        statusCode: 404,
-        errorMessages: ['User not found'],
+        statusCode: 500,
+        errorMessages: ['Duplicate users with same email detected'],
       });
     }
     return mapUserRow(rows[0]);
   } catch (error: unknown) {
+    if (error instanceof AppError) throw error;
+
     throw new AppError({
       statusCode: 500,
       errorMessages: ['Database internal error while fetching user by email'],
-      originalError: error as Error,
+      originalError: isProd ? undefined : (error as Error),
     });
   }
 }
+
+
 
 export async function selectUserById(id: number): Promise<User> {
   const query = `
