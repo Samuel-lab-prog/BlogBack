@@ -1,12 +1,10 @@
-# ✅ Checklist de Profissionalização do Projeto (Blog Fullstack)
+# Checklist de Profissionalização do Projeto (Blog Fullstack)
 
 Este checklist acompanha a evolução do projeto rumo a um nível profissional, cobrindo backend, frontend, segurança, testes, CI/CD e boas práticas.
 
-Use como guia de estudo e como documentação pública do seu crescimento como dev.
-
 ---
 
-## 🧩 **Nível 1 — Projeto Funcional**
+## **Nível 1 — Projeto Funcional**
 
 > Objetivo: App funcionando de ponta a ponta.
 
@@ -23,20 +21,20 @@ Use como guia de estudo e como documentação pública do seu crescimento como d
 
 ---
 
-## ⚙️ **Nível 2 — Projeto Profissional**
+## **Nível 2 — Projeto Profissional**
 
 > Objetivo: qualidade, padronização e confiabilidade.
 
-### 🔍 **Testes**
+### **Testes**
 
 - [x] Testes unitários do model
 - [x] Testes unitários do controller
 - [x] Script "test": "bun test"
 - [x] Testes rodando em ambiente NODE_ENV=test
 - [x] Cobertura de testes (bun test --coverage)
-- [ ] Testes automáticos no GitHub Actions
+- [x] Testes automáticos no GitHub Actions
 
-### 🧱 **Backend**
+### **Backend**
 
 - [x] Middleware global de erros (AppError)
 - [ ] Logger (Winston / Pino)
@@ -45,28 +43,28 @@ Use como guia de estudo e como documentação pública do seu crescimento como d
 - [ ] Logs de requisição (status, tempo, IP)
 - [ ] .env.dev, .env.test, .env.prod separados
 
-### 📘 **Documentação**
+### **Documentação**
 
-- [ ] Swagger (OpenAPI) para todos os endpoints
+- [x] Swagger (OpenAPI) para todos os endpoints
 - [ ] README completo com instruções
 - [ ] Coleção do Postman exportada
 - [ ] Diagrama da arquitetura
 
-### 💾 **Banco de Dados**
+### **Banco de Dados**
 
 - [x] Tabelas normalizadas
 - [ ] Scripts SQL versionados
-- [ ] Migrações (manual ou via Prisma/Drizzle)
+- [x] Migrações (manual ou via Prisma/Drizzle)
 - [ ] Backup automático
 - [ ] Script de reset de DB para testes
 
 ---
 
-## 🧰 **Nível 3 — Portfólio Forte**
+## **Nível 3 — Portfólio Forte**
 
 > Objetivo: mostrar maturidade técnica.
 
-### 🚀 **DevOps**
+### **DevOps**
 
 - [ ] Dockerfile para backend
 - [ ] docker-compose para backend + banco
@@ -74,42 +72,42 @@ Use como guia de estudo e como documentação pública do seu crescimento como d
 - [ ] Health check configurado
 - [ ] Logs centralizados (Logtail / Papertrail)
 
-### 🎨 **Frontend**
+### **Frontend**
 
-- [ ] Páginas de erro (404, 500)
-- [ ] Tratamento de erros do backend
-- [ ] Painel administrativo funcional
+- [x] Páginas de erro (404, 500)
+- [] Tratamento de erros do backend
+- [x] Painel administrativo funcional
 - [ ] Tema dark/light
 - [ ] UX refinada (feedbacks, toasts, loaders)
 
-### 🔒 **Segurança**
+### **Segurança**
 
-- [ ] Cookies HTTPOnly opcionais
+- [x] Cookies HTTPOnly opcionais
 - [ ] Refresh token ou token com expiração curta
 - [ ] Recuperação de senha (simulado ou real)
 
 ---
 
-## 🧠 **Nível 4 — Projeto Destaque**
+## **Nível 4 — Projeto Destaque**
 
 > Objetivo: ir além do comum — nível de dev contratado.
 
-### 💡 **Tecnologias avançadas**
+### **Tecnologias avançadas**
 
 - [ ] Prisma ORM (tipagem + migrações automáticas)
 - [ ] Redis para cache
 - [ ] Uploads (Cloudinary/S3)
 - [ ] Filas (BullMQ)
 
-### 🧾 **Qualidade de código**
+### **Qualidade de código**
 
 - [ ] Testes de integração (Supertest)
 - [ ] Testes E2E (Cypress / Playwright)
 - [ ] Cobertura > 80%
-- [ ] ESLint + Prettier
+- [x] ESLint + Prettier
 - [ ] Husky (lint e testes antes de commits)
 
-### 📹 **Demonstração**
+### **Demonstração**
 
 - [ ] README com badges (build passing, coverage)
 - [ ] Vídeo curto mostrando o funcionamento
@@ -117,9 +115,3 @@ Use como guia de estudo e como documentação pública do seu crescimento como d
 
 ---
 
-## 🎯 **Progresso Atual**
-
-> Atualize sempre que completar algo.
-
-✔️ Base sólida  
-⚙️ Próximo foco: CI/CD, cobertura de testes e documentação
