@@ -1,7 +1,8 @@
 import { DatabaseError } from 'pg';
 import { AppError } from '../utils/AppError.ts';
 import pool from '../db/pool.ts';
-import type { postRowType, postType } from './postTypes.ts';
+import type { postType } from './postTypes.ts';
+
 
 export async function insertPost(
   postData: Omit<postType, 'id' | 'createdAt' | 'updatedAt' | 'tags'>
@@ -38,8 +39,9 @@ export async function insertPost(
 
 export async function insertTagsIntoPost(postId: number, tagNames: string[]): Promise<number> {
   const client = await pool.connect();
+  tagNames = [...new Set(tagNames)];
   try {
-    await client.query('BEGIN');
+    await client.query("BEGIN");
     await client.query(
       `
       INSERT INTO tags (name)
@@ -48,27 +50,33 @@ export async function insertTagsIntoPost(postId: number, tagNames: string[]): Pr
       `,
       [tagNames]
     );
-    const { rows: tagRows } = await client.query(`SELECT id FROM tags WHERE name = ANY($1)`, [
-      tagNames,
-    ]);
+    const { rows: tagRows } = await client.query(
+      `
+      SELECT id, name
+      FROM tags
+      WHERE name = ANY($1)
+      ORDER BY array_position($1, name)
+      `,
+      [tagNames]
+    );
     const tagIds = tagRows.map((t) => t.id);
     if (tagIds.length) {
       await client.query(
         `
         INSERT INTO post_tags (post_id, tag_id)
         SELECT $1, UNNEST($2::int[])
-        ON CONFLICT DO NOTHING
+        ON CONFLICT (post_id, tag_id) DO NOTHING
         `,
         [postId, tagIds]
       );
     }
-    await client.query('COMMIT');
+    await client.query("COMMIT");
     return tagIds.length;
   } catch (error) {
-    await client.query('ROLLBACK');
+    await client.query("ROLLBACK");
     throw new AppError({
       statusCode: 500,
-      errorMessages: ['Failed to associate tags to post: an unexpected error occurred'],
+      errorMessages: ["Failed to associate tags to post: an unexpected error occurred"],
       originalError: error as Error,
     });
   } finally {
@@ -76,15 +84,16 @@ export async function insertTagsIntoPost(postId: number, tagNames: string[]): Pr
   }
 }
 
+
 export async function selectPosts(
   limit: number,
   tag: string | null
 ): Promise<Omit<postType, 'content' | 'authorId' | 'id'>[]> {
   const query = `
     SELECT 
-      p.title as, p.slug,
-      p.created_at AS createdAt,
-      p.updated_at AS updatedAt, p.excerpt,
+      p.title, p.slug,
+      p.created_at,
+      p.updated_at, p.excerpt,
       json_agg(t.name) AS tags
     FROM posts p
     JOIN post_tags pt ON p.id = pt.post_id
@@ -97,7 +106,15 @@ export async function selectPosts(
   try {
     const params = tag ? [limit, tag] : [limit];
     const { rows } = await pool.query(query, params);
-    return rows;
+
+    return rows.map((row) => ({
+      title: row.title,
+      slug: row.slug,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      excerpt: row.excerpt,
+      tags: row.tags,
+    }));
   } catch (error) {
     throw new AppError({
       statusCode: 500,
@@ -120,7 +137,20 @@ export async function selectPostBySlug(slug: string): Promise<postType | null> {
     LIMIT 1
   `;
   const { rows } = await pool.query(query, [slug]);
-  return rows[0] ? mapPostRow(rows[0]) : null;
+  if (!rows[0]) {
+    return null;
+  }
+  return {
+    id: rows[0].id,
+    title: rows[0].title,
+    authorId: rows[0].author_id,
+    slug: rows[0].slug,
+    content: rows[0].content,
+    createdAt: rows[0].created_at,
+    updatedAt: rows[0].updated_at,
+    excerpt: rows[0].excerpt,
+    tags: rows[0].tags,
+  };
 }
 export async function selectAllUniqueTags(): Promise<string[]> {
   const query = `SELECT DISTINCT name FROM tags ORDER BY name ASC`;
@@ -136,11 +166,11 @@ export async function selectAllUniqueTags(): Promise<string[]> {
   }
 }
 
-export async function deletePostBySlug(slug: string): Promise<boolean> {
-  const query = `DELETE FROM posts WHERE slug = $1`;
+export async function deletePostBySlug(slug: string): Promise<number> {
+  const query = `DELETE FROM posts WHERE slug = $1 RETURNING id`;
   try {
-    const { rowCount } = await pool.query(query, [slug]);
-    return Boolean(rowCount);
+    const { rows } = await pool.query(query, [slug]);
+    return rows[0]?.id ?? 0;
   } catch (error) {
     throw new AppError({
       statusCode: 500,
@@ -150,14 +180,14 @@ export async function deletePostBySlug(slug: string): Promise<boolean> {
   }
 }
 
-export async function deleteOrphanTags(): Promise<boolean> {
+export async function deleteOrphanTags(): Promise<number> {
   try {
     const query = `
       DELETE FROM tags
       WHERE id NOT IN (SELECT DISTINCT tag_id FROM post_tags)
     `;
     const { rowCount } = await pool.query(query);
-    return Boolean(rowCount);
+    return rowCount ? rowCount : 0;
   } catch (error) {
     throw new AppError({
       statusCode: 500,
@@ -167,11 +197,11 @@ export async function deleteOrphanTags(): Promise<boolean> {
   }
 }
 
-export async function deleteTagsFromPost(postId: number): Promise<boolean> {
+export async function deleteTagsFromPost(postId: number): Promise<number> {
   try {
     const query = `DELETE FROM post_tags WHERE post_id = $1`;
     const { rowCount } = await pool.query(query, [postId]);
-    return Boolean(rowCount);
+    return rowCount ? rowCount : 0;
   } catch (error) {
     throw new AppError({
       statusCode: 500,
@@ -184,9 +214,11 @@ export async function deleteTagsFromPost(postId: number): Promise<boolean> {
 export async function updatePostBySlug(
   slug: string,
   newData: Partial<Omit<postType, 'id' | 'createdAt' | 'updatedAt' | 'authorId'>>
-): Promise<boolean> {
+): Promise<number> {
   const keys = Object.keys(newData);
-  if (!keys.length) return false;
+  if (!keys.length) {
+    return 0;
+  }
   const fields = keys.map((key, i) => `${key} = $${i + 1}`);
   const values = Object.values(newData);
   fields.push(`updated_at = NOW()`);
@@ -194,10 +226,11 @@ export async function updatePostBySlug(
     UPDATE posts
     SET ${fields.join(', ')}
     WHERE slug = $${values.length + 1}
+    RETURNING id
   `;
   try {
     const { rows } = await pool.query(query, [...values, slug]);
-    return Boolean(rows[0]);
+    return rows[0] ? rows[0].id : 0;
   } catch (error) {
     throw new AppError({
       statusCode: 500,

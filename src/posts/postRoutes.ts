@@ -13,7 +13,6 @@ import { authenticateUser } from '../users/userController.ts';
 const titleField = t.String({
   minLength: 3,
   maxLength: 150,
-  example: 'Como aprender JavaScript',
   error() {
     throw new AppError({
       errorMessages: ['Invalid title: must be between 3 and 150 characters'],
@@ -21,10 +20,9 @@ const titleField = t.String({
     });
   },
 });
+
 const contentField = t.String({
   minLength: 100,
-  example:
-    'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua...',
   error() {
     throw new AppError({
       errorMessages: ['Content must have at least 100 characters'],
@@ -32,9 +30,9 @@ const contentField = t.String({
     });
   },
 });
+
 const excerptField = t.String({
   maxLength: 150,
-  example: 'My Chemical Romance is the best band that ever existed. Here is why...',
   error() {
     throw new AppError({
       errorMessages: ['Excerpt must have at most 150 characters'],
@@ -42,67 +40,56 @@ const excerptField = t.String({
     });
   },
 });
-const tagsField = t.Array(t.String({ example: 'JavaScript' }), {
+
+const tagsField = t.Array(t.String(), {
   minItems: 1,
   uniqueItems: true,
   error() {
     throw new AppError({
-      errorMessages: ['Tags must be an array of strings with at least one tag'],
+      errorMessages: ['Tags must be an array with at least 1 unique tag'],
       statusCode: 422,
     });
   },
 });
 
+
 async function requireAdmin(cookie: { token?: { value: string } }) {
   const token = cookie.token?.value;
-  if (!token) throw new AppError({ statusCode: 401, errorMessages: ['Authentication required'] });
+  if (!token)
+    throw new AppError({ statusCode: 401, errorMessages: ['Authentication required'] });
+
   const context = await authenticateUser(token);
-  if (!context.isAdmin) throw new AppError({ statusCode: 403, errorMessages: ['Admin only'] });
+
+  if (!context.isAdmin)
+    throw new AppError({ statusCode: 403, errorMessages: ['Admin only'] });
+
   return context;
 }
 
 export const postRoutes = (app: Elysia) =>
   app.group('/posts', (app) =>
     app
+
       .post(
         '/',
         async ({ body, cookie, set }) => {
           const context = await requireAdmin(cookie);
-          const fullBody = { ...body, authorId: context.id };
-          const post = await registerPost(fullBody);
+          const fullData = { ...body, authorId: context.id };
+
+          const post = await registerPost(fullData);
           set.status = 201;
           return post;
         },
         {
-          body: t.Object(
-            {
-              title: titleField,
-              content: contentField,
-              excerpt: excerptField,
-              tags: tagsField,
-            },
-            {
-              examples: {
-                'application/json': {
-                  title: 'How to learn anything fast',
-                  content:
-                    'Have you ever wanted to learn something new but felt overwhelmed by the amount of information out there? In this post, I will share some tips and strategies that helped me learn new skills quickly and effectively...',
-                  excerpt: 'Learning made easy: Tips to accelerate your learning',
-                  tags: ['JavaScript', 'Programming'],
-                },
-              },
-            }
-          ),
+          body: t.Object({
+            title: titleField,
+            content: contentField,
+            excerpt: excerptField,
+            tags: tagsField,
+          }),
           response: {
             201: t.Object({
               id: t.Number(),
-              title: t.String(),
-              slug: t.String(),
-              content: t.String(),
-              excerpt: t.String(),
-              tags: t.Array(t.String()),
-              createdAt: t.String(),
-              updatedAt: t.String(),
             }),
             400: errorSchema,
             422: errorSchema,
@@ -110,8 +97,8 @@ export const postRoutes = (app: Elysia) =>
             500: errorSchema,
           },
           detail: {
-            summary: 'Create a new post',
-            description: 'Creates a new post with title, content, excerpt, and tags. Admin only.',
+            summary: 'Create post',
+            description: 'Admin only.',
             tags: ['Post'],
           },
         }
@@ -121,16 +108,24 @@ export const postRoutes = (app: Elysia) =>
         '/',
         async ({ query }) => {
           const limit = Number(query.limit ?? 20);
+
           if (isNaN(limit) || limit < 1 || limit > 100)
-            throw new AppError({ statusCode: 422, errorMessages: ['Invalid limit'] });
+            throw new AppError({
+              statusCode: 422,
+              errorMessages: ['Invalid limit'],
+            });
+
           const tag = query.tag ?? null;
           return await listPosts(limit, tag);
         },
         {
+          query: t.Object({
+            limit: t.Optional(t.Numeric()),
+            tag: t.Optional(t.String()),
+          }),
           response: {
             200: t.Array(
               t.Object({
-                id: t.Number(),
                 title: t.String(),
                 slug: t.String(),
                 excerpt: t.String(),
@@ -144,25 +139,22 @@ export const postRoutes = (app: Elysia) =>
           },
           detail: {
             summary: 'List posts',
-            description:
-              'Returns a list of posts, optionally filtered by tag and limited in number (default limit 20).',
+            description: 'Optional tag filter.',
             tags: ['Post'],
           },
         }
       )
+
       .get(
         '/tags',
-        async () => {
-          return await fetchTags();
-        },
+        async () => await fetchTags(),
         {
           response: {
             200: t.Array(t.String()),
             500: errorSchema,
           },
           detail: {
-            summary: 'Get all tags',
-            description: 'Fetch all unique tags from the database.',
+            summary: 'Fetch tags',
             tags: ['Post'],
           },
         }
@@ -170,10 +162,11 @@ export const postRoutes = (app: Elysia) =>
 
       .get(
         '/:title',
-        async ({ params }) => {
-          return await getPostByTitle(params.title);
-        },
+        async ({ params }) => await getPostByTitle(params.title),
         {
+          params: t.Object({
+            title: t.String(),
+          }),
           response: {
             200: t.Object({
               title: t.String(),
@@ -188,8 +181,7 @@ export const postRoutes = (app: Elysia) =>
             500: errorSchema,
           },
           detail: {
-            summary: 'Get a post by title',
-            description: 'Fetch a single post by its title.',
+            summary: 'Get post by title',
             tags: ['Post'],
           },
         }
@@ -203,15 +195,15 @@ export const postRoutes = (app: Elysia) =>
           set.status = 204;
         },
         {
-          params: t.Object({ title: titleField }),
+          params: t.Object({ title: t.String() }),
           response: {
             204: t.Void(),
             404: errorSchema,
             500: errorSchema,
           },
           detail: {
-            summary: 'Delete a post by title',
-            description: 'Admin only. Removes a post from the database by its title.',
+            summary: 'Delete post',
+            description: 'Admin only.',
             tags: ['Post'],
           },
         }
@@ -233,7 +225,9 @@ export const postRoutes = (app: Elysia) =>
               tags: tagsField,
             })
           ),
-          params: t.Object({ title: titleField }),
+          params: t.Object({
+            title: t.String(),
+          }),
           response: {
             204: t.Void(),
             404: errorSchema,
@@ -241,8 +235,8 @@ export const postRoutes = (app: Elysia) =>
             500: errorSchema,
           },
           detail: {
-            summary: 'Update a post by title',
-            description: 'Admin only. Updates a post in the database by its title.',
+            summary: 'Update post',
+            description: 'Partial update. Admin only.',
             tags: ['Post'],
           },
         }
