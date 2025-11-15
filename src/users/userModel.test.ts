@@ -3,7 +3,6 @@ import {
   insertUser,
   selectUserByEmail,
   selectUserById,
-  selectIsAdmin,
 } from './userModel';
 import pool from '../db/pool';
 import { AppError } from '../utils/AppError';
@@ -22,7 +21,7 @@ beforeAll(async () => {
     firstName: testFirstName,
     lastName: testLastName,
     email: testEmail,
-    passwordHash: testPasswordHash,
+    password: testPasswordHash,
   });
 });
 
@@ -32,7 +31,7 @@ describe('User model tests', () => {
       firstName: 'Alice',
       lastName: 'Brown',
       email: 'alice@example.com',
-      passwordHash: 'hash456',
+      password: 'hash456',
     });
 
     expect(inserted).toEqual({ id: 2 });
@@ -43,7 +42,7 @@ describe('User model tests', () => {
       firstName: 'Bob',
       lastName: 'Green',
       email: testEmail, 
-      passwordHash: 'irrelevantHash',
+      password: 'irrelevantHash',
     });
 
    expect(duplicated).rejects.toBeInstanceOf(AppError);
@@ -82,15 +81,5 @@ describe('User model tests', () => {
   test('Get user by non-existing ID → should return null', async () => {
     const user = await selectUserById(9999);
     expect(user).toBeNull();
-  });
-
-  test('Check if user is admin', async () => {
-    const admin = await selectIsAdmin(testUserId);
-    expect(admin).toBe(testIsAdmin);
-  });
-
-  test('Check if non-existing user is admin → should return null', async () => {
-    const admin = await selectIsAdmin(9999);
-    expect(admin).toBeNull();
   });
 });

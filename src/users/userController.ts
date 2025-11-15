@@ -1,11 +1,11 @@
 import { AppError } from '../utils/AppError';
-import { insertUser, selectIsAdmin, selectUserByEmail, selectUserById } from './userModel';
+import { insertUser, selectUserByEmail, selectUserById } from './userModel';
 import { generateToken, verifyToken, type Payload } from '../utils/jwt';
-import { type User } from './userTypes';
-import bycrypt from 'bcryptjs';
+import { type NewUser, type User } from './userTypes';
+import bcrypt from 'bcryptjs';
 
-export async function registerUser(body: Omit<User, 'id' | 'isAdmin'>): Promise<Pick<User, 'id'>> {
-  const passwordHash = await bycrypt.hash(
+export async function registerUser(body: NewUser): Promise<Pick<User, 'id'>> {
+  const passwordHash = await bcrypt.hash(
     body.password,
     process.env.SALT_ROUNDS ? parseInt(process.env.SALT_ROUNDS) : 10
   );
@@ -13,10 +13,10 @@ export async function registerUser(body: Omit<User, 'id' | 'isAdmin'>): Promise<
 }
 
 export async function loginUser(
-  body: Pick<User, 'email' | 'password'>
-): Promise<{ token: string; user: Omit<User, 'password'> }> {
+  body: { email: string; password: string }
+): Promise<{ token: string; user: User }> {
   const user = await selectUserByEmail(body.email);
-  if (!user || !(await bycrypt.compare(body.password, user.password))) {
+  if (!user || !(await bcrypt.compare(body.password, user.passwordHash))) {
     throw new AppError({
       statusCode: 401,
       errorMessages: ['Invalid credentials'],
@@ -35,7 +35,7 @@ export async function loginUser(
   };
 }
 
-export async function authenticateUser(token: string): Promise<Omit<User, 'password'>> {
+export async function authenticateUser(token: string): Promise<User> {
   const payload = verifyToken(token);
   if (!payload) {
     throw new AppError({
@@ -50,6 +50,5 @@ export async function authenticateUser(token: string): Promise<Omit<User, 'passw
       errorMessages: ['User not found'],
     });
   }
-const { password, ...userWithoutPassword } = user;
-return userWithoutPassword;
+  return user;
 }

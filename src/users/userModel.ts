@@ -8,7 +8,7 @@ const isProd = process.env.NODE_ENV === 'production';
 export async function insertUser(
   userData: NewUser
 ): Promise<Pick<User, 'id'>> {
-  const { firstName, lastName, email, passwordHash } = userData;
+  const { firstName, lastName, email, password } = userData;
   const query = `
     INSERT INTO users (first_name, last_name, email, password_hash)
     VALUES ($1, $2, $3, $4)
@@ -19,7 +19,7 @@ export async function insertUser(
       firstName,
       lastName,
       email,
-      passwordHash,
+      password,
     ]);
 
     if (!rows[0]) {
@@ -114,26 +114,3 @@ export async function selectUserById(id: number): Promise<User | null> {
     });
   }
 }
-
-export async function selectIsAdmin(userId: number): Promise<boolean | null> {
-  const query = `
-    SELECT is_admin
-    FROM users
-    WHERE id = $1
-  `;
-
-  try {
-    const { rows } = await pool.query(query, [userId]);
-
-    if (!rows[0]) return null;
-
-    return rows[0].is_admin;
-  } catch (error: unknown) {
-    throw new AppError({
-      statusCode: 500,
-      errorMessages: ['Database internal error while fetching user role'],
-      originalError: isProd ? undefined : (error as Error),
-    });
-  }
-}
-

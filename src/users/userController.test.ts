@@ -1,4 +1,4 @@
-/* import { describe, test, expect, beforeAll } from 'bun:test';
+import { describe, test, expect, beforeAll } from 'bun:test';
 import { loginUser, registerUser, authenticateUser } from './userController';
 import pool from '../db/pool';
 
@@ -6,7 +6,8 @@ const testEmail = 'amyrose@example.com';
 const testPassword = 'securepassword';
 const testFirstName = 'Amy';
 const testLastName = 'Rose';
-let testUserId: number;
+const testUserId = 1;
+const testIsAdmin = false;
 
 beforeAll(async () => {
   await pool.query(`TRUNCATE TABLE users RESTART IDENTITY CASCADE;`);
@@ -18,11 +19,11 @@ beforeAll(async () => {
     password: testPassword,
   };
 
-  const insertedUser = await registerUser(userData);
-  testUserId = insertedUser.id;
+  await registerUser(userData);
 });
 
 describe('User controller test', () => {
+
   test('Register new user', async () => {
     const newUser = {
       firstName: 'Jane',
@@ -32,8 +33,10 @@ describe('User controller test', () => {
     };
 
     const result = await registerUser(newUser);
+
     expect(result).toHaveProperty('id');
     expect(typeof result.id).toBe('number');
+    expect(result.id).toBeGreaterThan(1); 
   });
 
   test('Login with valid credentials', async () => {
@@ -41,29 +44,40 @@ describe('User controller test', () => {
       email: testEmail,
       password: testPassword,
     };
+
     const result = await loginUser(loginData);
+
     expect(result).toHaveProperty('token');
     expect(typeof result.token).toBe('string');
+
+    expect(result).toHaveProperty('user');
+    expect(result.user.email).toBe(testEmail);
+    expect(result.user.firstName).toBe(testFirstName);
   });
 
-  test('Login with invalid credentials', async () => {
-    const loginData = {
-      email: testEmail,
-      password: 'wrongpassword',
-    };
-    expect(loginUser(loginData)).rejects.toThrow('Invalid credentials');
-  });
+test('Login with invalid credentials', async () => {
+  const loginData = {
+    email: testEmail,
+    password: 'wrongpassword',
+  };
+
+ expect(loginUser(loginData)).rejects.toThrowError('Invalid credentials');
+});
+
 
   test('Authenticate user with valid token', async () => {
     const loginData = {
       email: testEmail,
       password: testPassword,
     };
+
     const { token } = await loginUser(loginData);
+
     const authResult = await authenticateUser(token);
+
     expect(authResult).toEqual({
       id: testUserId,
-      isAdmin: false,
+      isAdmin: testIsAdmin,
       email: testEmail,
       firstName: testFirstName,
       lastName: testLastName,
@@ -72,7 +86,7 @@ describe('User controller test', () => {
 
   test('Authenticate user with invalid token', async () => {
     const invalidToken = 'invalid.token.here';
-    expect(authenticateUser(invalidToken)).rejects.toThrow('User not found');
+
+   expect(authenticateUser(invalidToken)).rejects.toThrow('User not found');
   });
 });
- */
