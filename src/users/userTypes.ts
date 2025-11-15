@@ -12,6 +12,16 @@ export type User = {
   firstName: string;
   lastName: string;
   email: string;
-  password: string;
   isAdmin: boolean;
+};
+
+export type UserWithPasswordHash = User & {
+  passwordHash: string;
+};
+
+export type NewUser = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  passwordHash: string;
 };

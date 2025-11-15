@@ -1,86 +1,96 @@
 import { describe, test, expect, beforeAll } from 'bun:test';
-import { insertUser, selectUserByEmail, selectUserById, selectIsAdmin } from './userModel';
+import {
+  insertUser,
+  selectUserByEmail,
+  selectUserById,
+  selectIsAdmin,
+} from './userModel';
 import pool from '../db/pool';
+import { AppError } from '../utils/AppError';
 
 const testEmail = 'davidsmith@example.com';
-const testPassword = 'securepassword';
+const testPasswordHash = 'hash123';
 const testFirstName = 'David';
 const testLastName = 'Smith';
-const testUserId = 1; // Assuming this will be the first inserted user and gets ID 1
-const testIsAdmin = false; // Default value for new users
+const testUserId = 1;
+const testIsAdmin = false;
 
 beforeAll(async () => {
   await pool.query(`TRUNCATE TABLE users RESTART IDENTITY CASCADE;`);
-  const userData = {
+
+  await insertUser({
     firstName: testFirstName,
     lastName: testLastName,
     email: testEmail,
-    password: testPassword,
-  };
-  await insertUser(userData);
+    passwordHash: testPasswordHash,
+  });
 });
 
 describe('User model tests', () => {
   test('Insert new user', async () => {
-    const user = {
+    const inserted = await insertUser({
       firstName: 'Alice',
       lastName: 'Brown',
       email: 'alice@example.com',
-      password: 'secret',
-    };
-    const inserted = await insertUser(user);
-    expect(inserted).toEqual({
-      id: 2,
+      passwordHash: 'hash456',
     });
+
+    expect(inserted).toEqual({ id: 2 });
   });
 
-  test('Insert new user with existing email', async () => {
-    const user = {
+  test('Insert new user with existing email → should throw AppError 409', async () => {
+    const duplicated = insertUser({
       firstName: 'Bob',
       lastName: 'Green',
-      email: testEmail,
-      password: 'anotherpassword',
-    };
-    expect(insertUser(user)).rejects.toBeTruthy();
+      email: testEmail, 
+      passwordHash: 'irrelevantHash',
+    });
+
+   expect(duplicated).rejects.toBeInstanceOf(AppError);
   });
 
   test('Get user by email', async () => {
     const user = await selectUserByEmail(testEmail);
+
     expect(user).toEqual({
       id: testUserId,
       firstName: testFirstName,
       lastName: testLastName,
       email: testEmail,
-      password: testPassword,
+      passwordHash: testPasswordHash,
       isAdmin: testIsAdmin,
     });
   });
 
-  test('Get user by non-existing email', async () => {
-    expect(selectUserByEmail('nonexistent@example.com')).rejects.toBeTruthy();
+  test('Get user by non-existing email → should return null', async () => {
+    const user = await selectUserByEmail('nonexistent@example.com');
+    expect(user).toBeNull();
   });
 
   test('Get user by ID', async () => {
     const user = await selectUserById(testUserId);
+
     expect(user).toEqual({
       id: testUserId,
       firstName: testFirstName,
       lastName: testLastName,
       email: testEmail,
-      password: testPassword,
       isAdmin: testIsAdmin,
     });
   });
 
-  test('Get user by non-existing ID', async () => {
-    expect(selectUserById(9999)).rejects.toBeTruthy();
+  test('Get user by non-existing ID → should return null', async () => {
+    const user = await selectUserById(9999);
+    expect(user).toBeNull();
   });
 
   test('Check if user is admin', async () => {
     const admin = await selectIsAdmin(testUserId);
     expect(admin).toBe(testIsAdmin);
   });
-  test('Check if non-existing user is admin', async () => {
-    expect(selectIsAdmin(9999)).rejects.toBeTruthy();
+
+  test('Check if non-existing user is admin → should return null', async () => {
+    const admin = await selectIsAdmin(9999);
+    expect(admin).toBeNull();
   });
 });

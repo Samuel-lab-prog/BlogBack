@@ -1,24 +1,14 @@
 import pool from '../db/pool.ts';
 import { DatabaseError } from 'pg';
 import { AppError } from '../utils/AppError.ts';
-import { type UserRow, type User } from './userTypes.ts';
+import { type UserWithPasswordHash, type User, type NewUser } from './userTypes.ts';
 
 const isProd = process.env.NODE_ENV === 'production';
 
-function mapUserRow(row: UserRow): User {
-  return {
-    id: row.id,
-    firstName: row.first_name,
-    lastName: row.last_name,
-    email: row.email,
-    isAdmin: row.is_admin,
-    password: row.password_hash,
-  };
-}
 export async function insertUser(
-  userData: Omit<User, 'id' | 'isAdmin'>
+  userData: NewUser
 ): Promise<Pick<User, 'id'>> {
-  const { firstName, lastName, email, password } = userData;
+  const { firstName, lastName, email, passwordHash } = userData;
   const query = `
     INSERT INTO users (first_name, last_name, email, password_hash)
     VALUES ($1, $2, $3, $4)
@@ -29,43 +19,62 @@ export async function insertUser(
       firstName,
       lastName,
       email,
-      password,
+      passwordHash,
     ]);
+
+    if (!rows[0]) {
+      throw new AppError({
+        statusCode: 500,
+        errorMessages: ['Failed to create user: no userId returned from database'],
+      });
+    }
+
     return { id: rows[0].id };
   } catch (error: unknown) {
     if (error instanceof DatabaseError && error.code === '23505') {
       throw new AppError({
         statusCode: 409,
         errorMessages: ['Email already in use'],
-        originalError: error,
       });
     }
+    if (error instanceof AppError) throw error;
+
     throw new AppError({
       statusCode: 500,
       errorMessages: ['Database internal error while creating user'],
-      originalError: error as Error,
+      originalError: isProd ? undefined : (error as Error),
     });
   }
 }
-export async function selectUserByEmail(email: string): Promise<User | null> {
+
+export async function selectUserByEmail(email: string): Promise<UserWithPasswordHash | null> {
   const query = `
-    SELECT id, email, name, password, created_at, updated_at
+    SELECT id, email, first_name, last_name, is_admin, password_hash
     FROM users
     WHERE email = $1
     LIMIT 2
   `;
+
   try {
-    const { rows } = await pool.query<UserRow>(query, [email]);
-    if (!rows[0]) {
-      return null;
-    }
+    const { rows } = await pool.query(query, [email]);
+
+    if (!rows[0]) return null;
+
     if (rows.length > 1) {
       throw new AppError({
         statusCode: 500,
         errorMessages: ['Duplicate users with same email detected'],
       });
     }
-    return mapUserRow(rows[0]);
+
+    return {
+      id: rows[0].id,
+      email: rows[0].email,
+      firstName: rows[0].first_name,
+      lastName: rows[0].last_name,
+      isAdmin: rows[0].is_admin,
+      passwordHash: rows[0].password_hash,
+    };
   } catch (error: unknown) {
     if (error instanceof AppError) throw error;
 
@@ -78,32 +87,35 @@ export async function selectUserByEmail(email: string): Promise<User | null> {
 }
 
 
-
-export async function selectUserById(id: number): Promise<User> {
+export async function selectUserById(id: number): Promise<User | null> {
   const query = `
-    SELECT *
+    SELECT id, email, first_name, last_name, is_admin
     FROM users
     WHERE id = $1
   `;
+
   try {
-    const { rows } = await pool.query<UserRow>(query, [id]);
-    if (!rows[0]){
-      throw new AppError({
-        statusCode: 404,
-        errorMessages: ['User not found'],
-      });
-    }
-    return mapUserRow(rows[0]);
+    const { rows } = await pool.query(query, [id]);
+
+    if (!rows[0]) return null;
+
+    return {
+      id: rows[0].id,
+      email: rows[0].email,
+      firstName: rows[0].first_name,
+      lastName: rows[0].last_name,
+      isAdmin: rows[0].is_admin,
+    };
   } catch (error: unknown) {
     throw new AppError({
       statusCode: 500,
       errorMessages: ['Database internal error while fetching user by ID'],
-      originalError: error as Error,
+      originalError: isProd ? undefined : (error as Error),
     });
   }
 }
 
-export async function selectIsAdmin(userId: number): Promise<boolean> {
+export async function selectIsAdmin(userId: number): Promise<boolean | null> {
   const query = `
     SELECT is_admin
     FROM users
@@ -112,18 +124,16 @@ export async function selectIsAdmin(userId: number): Promise<boolean> {
 
   try {
     const { rows } = await pool.query(query, [userId]);
-    if (!rows[0]){
-      throw new AppError({
-        statusCode: 404,
-        errorMessages: ['User not found'],
-      });
-    }
+
+    if (!rows[0]) return null;
+
     return rows[0].is_admin;
   } catch (error: unknown) {
     throw new AppError({
       statusCode: 500,
       errorMessages: ['Database internal error while fetching user role'],
-      originalError: error as Error,
+      originalError: isProd ? undefined : (error as Error),
     });
   }
 }
+
