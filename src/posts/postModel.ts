@@ -113,14 +113,23 @@ export async function selectPosts(
     FROM posts p
     LEFT JOIN post_tags pt ON p.id = pt.post_id
     LEFT JOIN tags t ON pt.tag_id = t.id
-    ${tag ? 'WHERE t.name = $2' : ''}
+    WHERE (
+      $2::text IS NULL
+      OR p.id IN (
+        SELECT post_id 
+        FROM post_tags pt2
+        JOIN tags t2 ON pt2.tag_id = t2.id
+        WHERE t2.name = $2
+      )
+    )
     GROUP BY p.id
     ORDER BY p.created_at DESC
-    LIMIT $1
+    LIMIT $1;
   `;
 
   try {
-    const params = tag ? [limit, tag] : [limit];
+    const params = [limit, tag ?? null];
+
     const { rows } = await pool.query(query, params);
 
     return rows.map((row) => ({
