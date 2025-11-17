@@ -114,4 +114,3 @@ Este checklist acompanha a evolução do projeto rumo a um nível profissional, 
 - [ ] Deploy com usuário demo
 
 ---
-

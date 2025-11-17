@@ -1,53 +1,7 @@
 import { Elysia, t } from 'elysia';
 import { registerUser, loginUser, authenticateUser } from './userController';
 import { AppError, errorSchema } from '../utils/AppError';
-
-const emailField = t.String({
-  format: 'email',
-  example: 'david@gmail.com',
-  error() {
-    throw new AppError({
-      statusCode: 400,
-      errorMessages: ['Invalid email format'],
-    });
-  },
-});
-
-const passwordField = t.String({
-  minLength: 6,
-  maxLength: 30,
-  example: '12345678',
-  error() {
-    throw new AppError({
-      statusCode: 400,
-      errorMessages: ['Password must be between 6 and 30 characters long'],
-    });
-  },
-});
-
-const firstNameField = t.String({
-  minLength: 3,
-  maxLength: 30,
-  example: 'David',
-  error() {
-    throw new AppError({
-      statusCode: 400,
-      errorMessages: ['First name must be between 3 and 30 characters long'],
-    });
-  },
-});
-
-const lastNameField = t.String({
-  minLength: 3,
-  maxLength: 30,
-  example: 'Smith',
-  error() {
-    throw new AppError({
-      statusCode: 400,
-      errorMessages: ['Last name must be between 3 and 30 characters long'],
-    });
-  },
-});
+import { emailField, passwordField, firstNameField, lastNameField } from './userSchemas';
 
 export const userRoutes = (app: Elysia) =>
   app.group('/users', (app) =>
@@ -55,8 +9,9 @@ export const userRoutes = (app: Elysia) =>
       .post(
         '/register',
         async ({ body, set }) => {
-          await registerUser(body);
+          const user = await registerUser(body);
           set.status = 201;
+          return user;
         },
         {
           body: t.Object({
@@ -66,14 +21,14 @@ export const userRoutes = (app: Elysia) =>
             lastName: lastNameField,
           }),
           response: {
-            201: t.Void({ description: 'User successfully registered.' }),
+            201: t.Object({ id: t.Number() }, { description: 'User successfully registered.' }),
             400: errorSchema,
             409: errorSchema,
             500: errorSchema,
           },
           detail: {
             summary: 'Register a new user',
-            description: 'Creates a new user. Does not return any content.',
+            description: 'Creates a new user. Returns an Object with the userId.',
             tags: ['User'],
           },
         }
@@ -119,8 +74,14 @@ export const userRoutes = (app: Elysia) =>
       .get(
         '/auth',
         async ({ cookie: { token }, set }) => {
+          if (!token?.value) {
+            throw new AppError({
+              statusCode: 400,
+              errorMessages: ['Authentication token is required'],
+            });
+          }
           const user = await authenticateUser(token.value);
-          set.status = 204;
+          set.status = 200;
           return user;
         },
         {
@@ -136,7 +97,7 @@ export const userRoutes = (app: Elysia) =>
             }),
           }),
           response: {
-            204: t.Object(
+            200: t.Object(
               {
                 id: t.Number(),
                 email: t.String(),
@@ -147,13 +108,12 @@ export const userRoutes = (app: Elysia) =>
               { description: 'User successfully authenticated.' }
             ),
             400: errorSchema,
-            403: errorSchema,
             404: errorSchema,
             500: errorSchema,
           },
           detail: {
-            summary: 'Check admin status',
-            description: 'Verifies JWT token and checks if the user is an admin. Returns user info.',
+            summary: 'Authenticate user',
+            description: 'Validates JWT token from cookies and returns user info.',
             tags: ['User'],
           },
         }

@@ -21,3 +21,11 @@ export type postType = {
   updatedAt: string;
   tags: string[];
 };
+
+export type newPost = {
+  title: string;
+  slug: string;
+  content: string;
+  excerpt: string;
+  authorId: number;
+};

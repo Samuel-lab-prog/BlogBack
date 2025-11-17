@@ -1,11 +1,11 @@
 import { DatabaseError } from 'pg';
 import { AppError } from '../utils/AppError.ts';
 import pool from '../db/pool.ts';
-import type { postType } from './postTypes.ts';
+import type { postType, newPost } from './postTypes.ts';
 
-export async function insertPost(
-  postData: Omit<postType, 'id' | 'createdAt' | 'updatedAt' | 'tags'>
-): Promise<{ id: number }> {
+const isProd = process.env.NODE_ENV === 'production';
+
+export async function insertPost(postData: newPost): Promise<Pick<postType, 'id'>> {
   const { title, slug, content, authorId, excerpt } = postData;
   const query = `
     INSERT INTO posts (title, slug, content, author_id, excerpt)
@@ -22,6 +22,7 @@ export async function insertPost(
     }
     return rows[0].id;
   } catch (error: unknown) {
+    if (error instanceof AppError) throw error;
     if (error instanceof DatabaseError && error.code === '23505') {
       throw new AppError({
         statusCode: 409,
@@ -31,14 +32,13 @@ export async function insertPost(
     throw new AppError({
       statusCode: 500,
       errorMessages: ['Failed to create post: an unexpected error occurred'],
-      originalError: error as Error,
+      originalError: isProd ? undefined : (error as Error),
     });
   }
 }
 
 export async function insertTagsIntoPost(postId: number, tagNames: string[]): Promise<number> {
   const client = await pool.connect();
-  tagNames = [...new Set(tagNames)];
   try {
     await client.query('BEGIN');
     await client.query(

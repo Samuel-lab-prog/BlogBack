@@ -12,9 +12,10 @@ export async function registerUser(body: NewUser): Promise<Pick<User, 'id'>> {
   return await insertUser({ ...body, password: passwordHash });
 }
 
-export async function loginUser(
-  body: { email: string; password: string }
-): Promise<{ token: string; user: User }> {
+export async function loginUser(body: {
+  email: string;
+  password: string;
+}): Promise<{ token: string; user: User }> {
   const user = await selectUserByEmail(body.email);
   if (!user || !(await bcrypt.compare(body.password, user.passwordHash))) {
     throw new AppError({

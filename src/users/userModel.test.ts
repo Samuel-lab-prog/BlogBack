@@ -1,9 +1,5 @@
 import { describe, test, expect, beforeAll } from 'bun:test';
-import {
-  insertUser,
-  selectUserByEmail,
-  selectUserById,
-} from './userModel';
+import { insertUser, selectUserByEmail, selectUserById } from './userModel';
 import pool from '../db/pool';
 import { AppError } from '../utils/AppError';
 
@@ -41,11 +37,11 @@ describe('User model tests', () => {
     const duplicated = insertUser({
       firstName: 'Bob',
       lastName: 'Green',
-      email: testEmail, 
+      email: testEmail,
       password: 'irrelevantHash',
     });
 
-   expect(duplicated).rejects.toBeInstanceOf(AppError);
+    expect(duplicated).rejects.toBeInstanceOf(AppError);
   });
 
   test('Get user by email', async () => {

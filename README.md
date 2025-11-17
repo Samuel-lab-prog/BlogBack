@@ -99,6 +99,3 @@ This project follows several standards and patterns to ensure clean, maintainabl
 3.  Write meaningful commit messages:
     **Bad:** fix stuff
     **Good:** fix: resolve user authentication token validation issue
-
-
-

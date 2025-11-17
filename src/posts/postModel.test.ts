@@ -30,8 +30,7 @@ const testData = {
 };
 
 let testUserId: number;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let testPostId: any;
+let testPostId: number;
 
 beforeAll(async () => {
   await pool.query(`
@@ -47,8 +46,8 @@ beforeAll(async () => {
     authorId: testUserId,
   });
 
-  testPostId = insertedPost;
-
+  testPostId = insertedPost.id;
+    
   await insertTagsIntoPost(testPostId, testData.tags);
 });
 

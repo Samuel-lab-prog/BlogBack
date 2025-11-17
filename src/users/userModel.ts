@@ -5,9 +5,7 @@ import { type UserWithPasswordHash, type User, type NewUser } from './userTypes.
 
 const isProd = process.env.NODE_ENV === 'production';
 
-export async function insertUser(
-  userData: NewUser
-): Promise<Pick<User, 'id'>> {
+export async function insertUser(userData: NewUser): Promise<Pick<User, 'id'>> {
   const { firstName, lastName, email, password } = userData;
   const query = `
     INSERT INTO users (first_name, last_name, email, password_hash)
@@ -15,12 +13,7 @@ export async function insertUser(
     RETURNING id
   `;
   try {
-    const { rows } = await pool.query(query, [
-      firstName,
-      lastName,
-      email,
-      password,
-    ]);
+    const { rows } = await pool.query(query, [firstName, lastName, email, password]);
 
     if (!rows[0]) {
       throw new AppError({
@@ -85,7 +78,6 @@ export async function selectUserByEmail(email: string): Promise<UserWithPassword
     });
   }
 }
-
 
 export async function selectUserById(id: number): Promise<User | null> {
   const query = `
