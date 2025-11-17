@@ -39,7 +39,7 @@ Este checklist acompanha a evolução do projeto rumo a um nível profissional, 
 - [x] Middleware global de erros (AppError)
 - [ ] Logger (Winston / Pino)
 - [ ] Helmet + rate limiting
-- [ ] Sanitização de dados (xss-clean, etc.)
+- [x] Sanitização de dados (xss-clean, etc.)
 - [ ] Logs de requisição (status, tempo, IP)
 - [x] .env.dev, .env.test, .env.prod separados
 

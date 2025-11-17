@@ -1,51 +1,15 @@
 import Elysia from 'elysia';
 import { openapi } from '@elysiajs/openapi';
 import cors from '@elysiajs/cors';
-
-import { AppError } from './utils/AppError';
+import { xssClean } from './middlewares/xssClean';
+import { handleError } from './middlewares/handleError';
 import { userRoutes } from './users/userRoute';
 import { postRoutes } from './posts/postRoutes';
 
-function jsonResponse(status: number, body: object) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
-}
-
 new Elysia()
   .use(cors())
-  .onError(({ error, set }) => {
-    if (error instanceof AppError) {
-      set.status = error.statusCode;
-
-      console.error(
-        `[AppError ${error.statusCode}]`,
-        error.errorMessages.join(', '),
-        error.originalError ?? ''
-      );
-
-      return jsonResponse(set.status, {
-        errorMessages: error.errorMessages,
-        statusCode: set.status,
-        originalError:
-          typeof error.originalError === 'object'
-            ? String(error.originalError)
-            : error.originalError,
-      });
-    }
-
-    console.error('[Unexpected Error]', error);
-
-    const statusCode = typeof set.status === 'number' && set.status >= 400 ? set.status : 500;
-
-    return jsonResponse(statusCode, {
-      errorMessages: ['An unexpected error occurred'],
-      statusCode,
-      originalError: error instanceof Error ? error.message : String(error),
-    });
-  })
-
+  .onBeforeHandle(async (ctx) => xssClean(ctx))
+  .onError(async ({error, set}) => handleError(set, error))
   .use(userRoutes)
   .use(postRoutes)
   .use(
