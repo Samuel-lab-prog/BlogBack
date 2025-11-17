@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeAll } from 'bun:test';
 import { insertUser, selectUserByEmail, selectUserById } from './userModel';
-import pool from '../db/pool';
+import { pool } from '../db/connection';
 import { AppError } from '../utils/AppError';
 
 const testEmail = 'davidsmith@example.com';

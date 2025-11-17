@@ -25,7 +25,10 @@
     "dev": "bun run --watch src/server.ts",
     "format": "eslint . --fix && prettier --write .",
     "build": "bun build src/server.ts --outdir dist --target bun",
-    "test": "bun test"
+    "test": "bun test",
+    "migrate": "bun run src/db/scripts/runMigration.ts",
+    "seed": "bun run src/db/scripts/runSeeds.ts",
+    "reset-db": "bun run src/db/scripts/resetDb.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

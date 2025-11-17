@@ -1,0 +1,10 @@
+INSERT INTO post_tags (post_id, tag_id) VALUES (1, 1) ON CONFLICT DO NOTHING;
+INSERT INTO post_tags (post_id, tag_id) VALUES (1, 4) ON CONFLICT DO NOTHING;
+INSERT INTO post_tags (post_id, tag_id) VALUES (2, 2) ON CONFLICT DO NOTHING;
+INSERT INTO post_tags (post_id, tag_id) VALUES (2, 5) ON CONFLICT DO NOTHING;
+INSERT INTO post_tags (post_id, tag_id) VALUES (3, 3) ON CONFLICT DO NOTHING;
+INSERT INTO post_tags (post_id, tag_id) VALUES (3, 6) ON CONFLICT DO NOTHING;
+INSERT INTO post_tags (post_id, tag_id) VALUES (4, 1) ON CONFLICT DO NOTHING;
+INSERT INTO post_tags (post_id, tag_id) VALUES (4, 7) ON CONFLICT DO NOTHING;
+INSERT INTO post_tags (post_id, tag_id) VALUES (5, 8) ON CONFLICT DO NOTHING;
+INSERT INTO post_tags (post_id, tag_id) VALUES (5, 9) ON CONFLICT DO NOTHING;

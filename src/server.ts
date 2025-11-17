@@ -6,15 +6,6 @@ import { AppError } from './utils/AppError';
 import { userRoutes } from './users/userRoute';
 import { postRoutes } from './posts/postRoutes';
 
-import runMigration from './db/migrations';
-
-try {
-  await runMigration();
-} catch (err) {
-  console.error('Migration failed:', err);
-  process.exit(1);
-}
-
 function jsonResponse(status: number, body: object) {
   return new Response(JSON.stringify(body), {
     status,

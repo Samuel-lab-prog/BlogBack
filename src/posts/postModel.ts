@@ -1,6 +1,6 @@
 import { DatabaseError } from 'pg';
 import { AppError } from '../utils/AppError.ts';
-import pool from '../db/pool.ts';
+import { pool } from '../db/connection.ts';
 import type { postType, newPost } from './postTypes.ts';
 
 const isProd = process.env.NODE_ENV === 'production';

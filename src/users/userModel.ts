@@ -1,4 +1,4 @@
-import pool from '../db/pool.ts';
+import { pool } from '../db/connection.ts';
 import { DatabaseError } from 'pg';
 import { AppError } from '../utils/AppError.ts';
 import { type UserWithPasswordHash, type User, type NewUser } from './userTypes.ts';

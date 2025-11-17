@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll } from 'bun:test';
-import pool from '../db/pool';
+import { pool } from '../db/connection';
 import {
   insertPost,
   insertTagsIntoPost,
