@@ -1,14 +1,12 @@
 import Elysia from 'elysia';
 import { openapi } from '@elysiajs/openapi';
 import cors from '@elysiajs/cors';
-import { xssClean } from './middlewares/xssClean';
 import { handleError } from './middlewares/handleError';
 import { userRoutes } from './users/userRoute';
 import { postRoutes } from './posts/postRoutes';
 
 new Elysia()
   .use(cors())
-  .onBeforeHandle(async (ctx) => xssClean(ctx))
   .onError(async ({error, set}) => handleError(set, error))
   .use(userRoutes)
   .use(postRoutes)

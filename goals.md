@@ -56,7 +56,7 @@ Este checklist acompanha a evolução do projeto rumo a um nível profissional, 
 - [x] Scripts SQL versionados
 - [x] Migrações (manual ou via Prisma/Drizzle)
 - [ ] Backup automático
-- [ ] Script de reset de DB para testes
+- [x] Script de reset de DB para testes
 
 ---
 
