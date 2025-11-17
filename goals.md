@@ -4,7 +4,7 @@ Este checklist acompanha a evolução do projeto rumo a um nível profissional, 
 
 ---
 
-## **Nível 1 — Projeto Funcional**
+## **Nível 1**
 
 > Objetivo: App funcionando de ponta a ponta.
 
@@ -21,14 +21,14 @@ Este checklist acompanha a evolução do projeto rumo a um nível profissional, 
 
 ---
 
-## **Nível 2 — Projeto Profissional**
+## **Nível 2**
 
 > Objetivo: qualidade, padronização e confiabilidade.
 
 ### **Testes**
 
 - [x] Testes unitários do model
-- [x] Testes unitários do controller
+- [ ] Testes unitários do controller
 - [x] Script "test": "bun test"
 - [x] Testes rodando em ambiente NODE_ENV=test
 - [x] Cobertura de testes (bun test --coverage)
@@ -38,8 +38,8 @@ Este checklist acompanha a evolução do projeto rumo a um nível profissional, 
 
 - [x] Middleware global de erros (AppError)
 - [ ] Logger (Winston / Pino)
-- [x] Helmet + rate limiting
-- [x] Sanitização de dados (xss-clean, etc.)
+- [ ] Helmet + rate limiting
+- [ ] Sanitização de dados (xss-clean, etc.)
 - [ ] Logs de requisição (status, tempo, IP)
 - [x] .env.dev, .env.test, .env.prod separados
 
@@ -60,7 +60,7 @@ Este checklist acompanha a evolução do projeto rumo a um nível profissional, 
 
 ---
 
-## **Nível 3 — Portfólio Forte**
+## **Nível 3**
 
 > Objetivo: mostrar maturidade técnica.
 
@@ -85,32 +85,5 @@ Este checklist acompanha a evolução do projeto rumo a um nível profissional, 
 - [x] Cookies HTTPOnly opcionais
 - [ ] Refresh token ou token com expiração curta
 - [ ] Recuperação de senha (simulado ou real)
-
----
-
-## **Nível 4 — Projeto Destaque**
-
-> Objetivo: ir além do comum — nível de dev contratado.
-
-### **Tecnologias avançadas**
-
-- [ ] Prisma ORM (tipagem + migrações automáticas)
-- [ ] Redis para cache
-- [ ] Uploads (Cloudinary/S3)
-- [ ] Filas (BullMQ)
-
-### **Qualidade de código**
-
-- [ ] Testes de integração (Supertest)
-- [ ] Testes E2E (Cypress / Playwright)
-- [ ] Cobertura > 80%
-- [x] ESLint + Prettier
-- [ ] Husky (lint e testes antes de commits)
-
-### **Demonstração**
-
-- [ ] README com badges (build passing, coverage)
-- [ ] Vídeo curto mostrando o funcionamento
-- [ ] Deploy com usuário demo
 
 ---

@@ -129,30 +129,26 @@ export const postRoutes = (app: Elysia) =>
         },
       })
 
-      .get(
-        '/:title',
-        async ({ params }) => getPostByTitle(params.title),
-        {
-          params: t.Object({ title: t.String() }),
-          response: {
-            200: t.Object({
-              title: t.String(),
-              slug: t.String(),
-              content: t.String(),
-              excerpt: t.String(),
-              createdAt: t.String(),
-              updatedAt: t.String(),
-              tags: t.Array(t.String()),
-            }),
-            404: errorSchema,
-            500: errorSchema,
-          },
-          detail: {
-            summary: 'Get post by title',
-            tags: ['Post'],
-          },
-        }
-      )
+      .get('/:title', async ({ params }) => getPostByTitle(params.title), {
+        params: t.Object({ title: t.String() }),
+        response: {
+          200: t.Object({
+            title: t.String(),
+            slug: t.String(),
+            content: t.String(),
+            excerpt: t.String(),
+            createdAt: t.String(),
+            updatedAt: t.String(),
+            tags: t.Array(t.String()),
+          }),
+          404: errorSchema,
+          500: errorSchema,
+        },
+        detail: {
+          summary: 'Get post by title',
+          tags: ['Post'],
+        },
+      })
 
       .delete(
         '/:title',
@@ -189,7 +185,7 @@ export const postRoutes = (app: Elysia) =>
               title: titleField,
               content: contentField,
               excerpt: excerptField,
-              tags: patchTagsField, 
+              tags: patchTagsField,
             })
           ),
           params: t.Object({ title: t.String() }),

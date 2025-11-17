@@ -46,10 +46,7 @@ new Elysia()
 
     console.error('[Unexpected Error]', error);
 
-    const statusCode =
-      typeof set.status === 'number' && set.status >= 400
-        ? set.status
-        : 500;
+    const statusCode = typeof set.status === 'number' && set.status >= 400 ? set.status : 500;
 
     return jsonResponse(statusCode, {
       errorMessages: ['An unexpected error occurred'],
