@@ -126,8 +126,8 @@ export async function selectPosts(
     return rows.map((row) => ({
       title: row.title,
       slug: row.slug,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
+      createdAt: row.created_at.toString(),
+      updatedAt: row.updated_at.toString(),
       excerpt: row.excerpt,
       tags: row.tags,
     }));
@@ -168,8 +168,8 @@ export async function selectPostBySlug(slug: string): Promise<postType | null> {
     authorId: rows[0].author_id,
     slug: rows[0].slug,
     content: rows[0].content,
-    createdAt: rows[0].created_at,
-    updatedAt: rows[0].updated_at,
+    createdAt: rows[0].created_at.toString(),
+    updatedAt: rows[0].updated_at.toString(),
     excerpt: rows[0].excerpt,
     tags: rows[0].tags,
   };
