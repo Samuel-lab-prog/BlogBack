@@ -6,8 +6,8 @@ import { userRoutes } from './users/userRoute';
 import { postRoutes } from './posts/postRoutes';
 
 new Elysia()
-  .use(cors())
-  .onError(async ({error, set}) => handleError(set, error))
+.onError(async ({error, set}) => handleError(set, error))
+.use(cors())
   .use(userRoutes)
   .use(postRoutes)
   .use(
